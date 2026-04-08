@@ -1,0 +1,584 @@
+/* Page 5 — transfer waiting & sync */
+
+.mainScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  margin-top: 72px;
+  padding: 20px 16px 200px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 8px;
+  transition: opacity 0.35s ease;
+}
+
+.heroIconWrap {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid #e6f4ff;
+  border-top-color: #1677ff;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.checkSvg {
+  width: 48px;
+  height: 48px;
+  display: block;
+}
+
+.animCircle {
+  fill: none;
+  stroke: #52c41a;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 138;
+  stroke-dashoffset: 138;
+  animation: dashReveal 0.55s ease forwards;
+}
+
+.animCheckPath {
+  fill: none;
+  stroke: #52c41a;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: dashReveal 0.32s 0.5s ease forwards;
+}
+
+@keyframes dashReveal {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.heroTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f1f1f;
+  line-height: 1.3;
+  transition: color 0.35s ease;
+}
+
+.heroTitleGreen {
+  color: #52c41a;
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #8c8c8c;
+  line-height: 1.45;
+  max-width: 300px;
+}
+
+.connectingLine {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1677ff;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.syncCard {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease;
+}
+
+.syncCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.syncCardTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.syncRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.syncRowVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.syncRow:last-of-type {
+  margin-bottom: 0;
+}
+
+.syncKey {
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.syncVal {
+  color: #1f1f1f;
+  text-align: right;
+  word-break: break-word;
+}
+
+.syncValBlue {
+  color: #1677ff;
+}
+
+.syncValWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+
+.syncRowCheck {
+  flex-shrink: 0;
+  color: #52c41a;
+  display: inline-flex;
+}
+
+.syncCardFooter {
+  margin: 14px -16px -16px;
+  padding: 10px 16px;
+  background: #f6ffed;
+  border-radius: 0 0 10px 10px;
+  font-size: 12px;
+  color: #52c41a;
+  line-height: 1.45;
+}
+
+.agentReadySection {
+  margin-top: 8px;
+  animation: fadeIn 0.4s ease;
+}
+
+.agentReadyRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #52c41a;
+}
+
+.pulseDotGreen {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #52c41a;
+  animation: greenPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes greenPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+}
+
+.waitInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px;
+  color: #595959;
+}
+
+.queueBar {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  animation: fadeIn 0.4s ease;
+}
+
+.queueRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.queueRow:last-of-type {
+  margin-bottom: 12px;
+}
+
+.queueKey {
+  color: #595959;
+}
+
+.queueVal {
+  color: #1f1f1f;
+  text-align: right;
+}
+
+.queueValGreen {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.progressTrack {
+  height: 4px;
+  background: #f0f0f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  width: 0;
+  background: #1677ff;
+  border-radius: 2px;
+  transition: width 3s linear;
+}
+
+.progressFillActive {
+  width: 80%;
+}
+
+.btnNote {
+  width: 100%;
+  height: 44px;
+  border: 1.5px solid #1677ff;
+  border-radius: 22px;
+  background: #fff;
+  color: #1677ff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnNote:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+.btnCancel {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 22px;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnCancel:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+.notePanel {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  animation: fadeIn 0.25s ease;
+}
+
+.noteTextarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.noteTextarea:focus {
+  outline: none;
+  border-color: #1677ff;
+}
+
+.noteMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.btnSendNote {
+  margin-top: 10px;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 20px;
+  background: #1677ff;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.noteDone {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #52c41a;
+  text-align: center;
+}
+
+/* Service summary sheet */
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  animation: sheetFadeIn 0.2s ease-out;
+  border: none;
+  cursor: default;
+}
+
+.sheetPanel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 390px;
+  max-width: 100vw;
+  bottom: 0;
+  height: 65vh;
+  max-height: 65vh;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  animation: sheetSlideUp 0.28s ease-out;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes sheetFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translate(-50%, 100%);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sheetClose {
+  border: none;
+  background: transparent;
+  color: #8c8c8c;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheetDivider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+
+.sheetBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheetSection {
+  margin-bottom: 20px;
+}
+
+.sheetSectionTitle {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8c8c8c;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.sheetRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.sheetKey {
+  color: #595959;
+  flex-shrink: 0;
+}
+
+.sheetVal {
+  color: #1f1f1f;
+  text-align: right;
+  word-break: break-word;
+}
+
+.sheetValWarning {
+  color: #ff8c00;
+}
+
+.sheetValGreen {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.decisionTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.decisionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #1f1f1f;
+}
+
+.stepMarkDone {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulseWrap {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pulseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1677ff;
+  animation: stepPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes stepPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+}
+
+.sheetNote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.5;
+}

@@ -1,0 +1,113 @@
+.widget {
+  position: absolute;
+  z-index: 18;
+  touch-action: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.widget:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+
+.widgetCollapsed {
+  background: #1677ff;
+  border: none;
+  box-shadow: none;
+}
+
+.widgetCollapsed.dockRight {
+  border-radius: 20px 0 0 20px;
+}
+
+.widgetCollapsed.dockLeft {
+  border-radius: 0 20px 20px 0;
+}
+
+.collapsedPulseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  animation: sessionPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sessionPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
+}
+
+.widgetExpanded {
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 6px 6px 5px;
+  gap: 4px;
+  justify-content: center;
+}
+
+.expandedCheckIcon {
+  width: 20px;
+  height: 20px;
+  color: #1677ff;
+  flex-shrink: 0;
+}
+
+.expandedSummaryText {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1677ff;
+  line-height: 1.2;
+}
+
+.expandedActiveRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.expandedActiveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #52c41a;
+  flex-shrink: 0;
+  animation: activeDotPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes activeDotPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.expandedActiveLabel {
+  font-size: 10px;
+  color: #52c41a;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.dragging {
+  transition: none !important;
+}
