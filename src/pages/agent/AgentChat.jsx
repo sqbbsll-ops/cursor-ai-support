@@ -1,189 +1,145 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import dash from "./AgentDashboard.module.css";
 import styles from "./AgentChat.module.css";
 
 /** @typedef {{ kind: 'user' | 'ai' | 'aiCard', text: string, unprocessed?: boolean }} HistoryMsg */
-
 /** @typedef {{ text: string, tag: string }} UnprocessedCard */
-
-/** @typedef {{ done: boolean, text: string }} StepItem */
-
-/** @typedef {{ key: string, value: string, highlight?: boolean }} RequestLine */
+/** @typedef {{ status: 'done' | 'warning' | 'pending', text: string }} StepItem */
+/** @typedef {{ key: string, value: string }} OrderLine */
 
 /**
  * @typedef {{
+ *   initials: string;
  *   userName: string;
  *   issue: string;
+ *   timer: string;
  *   waitDisplay: string;
- *   priority: { variant: 'high' | 'standard'; label: string };
+ *   priorityLabel: string;
+ *   priorityHigh: boolean;
+ *   orderHeader: { no: string; route: string; departure: string };
  *   messages: HistoryMsg[];
- *   orderLines: { key: string; value: string }[];
- *   requestLines: RequestLine[];
+ *   quickChips: string[];
+ *   requestHeadline: string;
+ *   requestSubtext: string;
  *   unprocessedCards: UnprocessedCard[];
  *   steps: StepItem[];
- *   primaryAction: string;
- *   secondaryAction: string;
- *   quickChips: string[];
+ *   primaryActionLabel?: string;
+ *   secondaryActionLabel?: string;
+ *   manualHandlingNote?: string;
  * }} ChatSessionData
  */
 
 /** @type {Record<string, ChatSessionData>} */
 const CHAT_SESSIONS = {
   "1": {
+    initials: "ZW",
     userName: "Zhang Wei",
     issue: "Flight Refund",
+    timer: "04:23",
     waitDisplay: "3m 42s",
-    priority: { variant: "high", label: "High" },
+    priorityLabel: "High",
+    priorityHigh: true,
+    orderHeader: { no: "C12345678", route: "Shanghai → Beijing", departure: "Apr 28, 14:00" },
     messages: [
       { kind: "user", text: "I'd like to cancel my flight" },
-      {
-        kind: "ai",
-        text: "Got it! Let me look up your recent bookings. One moment please..."
-      },
+      { kind: "ai", text: "Got it! Let me look up your recent bookings. One moment please..." },
       {
         kind: "aiCard",
         text: "Flight found: Shanghai (PVG) → Beijing (PEK), Apr 28 14:00, Order C12345678"
       },
-      {
-        kind: "user",
-        text: "Actually I'm in a bit of a rush, I need this done today",
-        unprocessed: true
-      },
-      {
-        kind: "user",
-        text: "I tried calling yesterday but no one picked up",
-        unprocessed: true
-      },
-      {
-        kind: "ai",
-        text: "Would you like to apply for a refund or explore rebooking options?"
-      },
+      { kind: "user", text: "Actually I'm in a bit of a rush, I need this done today", unprocessed: true },
+      { kind: "user", text: "I tried calling yesterday but no one picked up", unprocessed: true },
+      { kind: "ai", text: "Would you like to apply for a refund or explore rebooking options?" },
       { kind: "user", text: "Let's do rebooking first" },
-      {
-        kind: "ai",
-        text: "Rebooking fee: CNY 120. Next available: Apr 28 18:00."
-      },
+      { kind: "ai", text: "Rebooking fee: CNY 120. Next available: Apr 28 18:00." },
       { kind: "user", text: "Actually just refund please" },
-      {
-        kind: "ai",
-        text: "Refund amount: CNY 680, processing fee CNY 50, timeline 3-5 business days."
-      },
+      { kind: "ai", text: "Refund amount: CNY 680, processing fee CNY 50, timeline 3-5 business days." },
       { kind: "user", text: "OK confirmed" }
     ],
-    orderLines: [
-      { key: "Order No.", value: "C12345678" },
-      { key: "Route", value: "Shanghai → Beijing" },
-      { key: "Departure", value: "April 28, 14:00" }
-    ],
-    requestLines: [
-      { key: "Final Need", value: "Refund Application", highlight: true },
-      { key: "Also Checked", value: "Rebooking options" },
-      { key: "Decision", value: "Confirmed refund" }
-    ],
+    quickChips: ["Refund confirmed", "Processing now", "Need more info", "Escalate"],
+    requestHeadline: "Refund Application",
+    requestSubtext: "Checked rebooking first → confirmed refund",
     unprocessedCards: [
-      { text: "I'm in a bit of a rush, I need this done today", tag: "Urgency expressed" },
-      { text: "I tried calling yesterday but no one picked up", tag: "Previous contact attempt" }
+      { text: "I'm in a rush, need this done today", tag: "Urgency" },
+      { text: "I tried calling yesterday", tag: "Prior contact" }
     ],
     steps: [
-      { done: true, text: "Order identified" },
-      { done: true, text: "Rebooking options reviewed" },
-      { done: true, text: "Switched to refund" },
-      { done: true, text: "Refund policy confirmed" },
-      { done: false, text: "Process refund (pending)" }
+      { status: "done", text: "Order identified" },
+      { status: "done", text: "Rebooking reviewed" },
+      { status: "done", text: "Refund confirmed" },
+      { status: "pending", text: "Agent processing" }
     ],
-    primaryAction: "Confirm Refund",
-    secondaryAction: "Escalate Case",
-    quickChips: ["Refund confirmed", "Need more info", "Processing now"]
+    primaryActionLabel: "Confirm & Process Refund",
+    secondaryActionLabel: "Escalate Case"
   },
   "2": {
+    initials: "LM",
     userName: "Li Ming",
-    issue: "Hotel Cancellation",
+    issue: "Hotel Upgrade Inquiry",
+    timer: "02:11",
     waitDisplay: "1m 15s",
-    priority: { variant: "standard", label: "Standard" },
+    priorityLabel: "Standard",
+    priorityHigh: false,
+    orderHeader: { no: "H98765432", route: "Grand Hyatt Shanghai", departure: "Apr 27-29" },
     messages: [
-      { kind: "user", text: "I'd like to cancel my hotel booking" },
+      { kind: "user", text: "I'd like to change my hotel room" },
       {
         kind: "ai",
-        text: "Found your booking: Grand Hyatt Shanghai, Apr 27-29, Order H98765432"
+        text: "I found your booking: Grand Hyatt Shanghai, Apr 27-29, Order H98765432. Would you like to cancel?"
       },
+      { kind: "user", text: "No I don't want to cancel, I want to upgrade to a suite", unprocessed: true },
+      { kind: "ai", text: "I can help you with cancellation or check your booking status." },
       {
         kind: "user",
-        text: "The hotel was really bad last time too",
+        text: "That's not what I need, I want to know if I can upgrade and how much it costs",
         unprocessed: true
       },
-      {
-        kind: "ai",
-        text: "Would you like to confirm the cancellation?"
-      },
-      {
-        kind: "user",
-        text: "Can you make sure I get a full refund?",
-        unprocessed: true
-      },
-      { kind: "user", text: "Yes confirm cancellation" },
-      {
-        kind: "ai",
-        text: "Cancellation confirmed. Refund: CNY 1,200, timeline 3-5 business days."
-      }
+      { kind: "user", text: "Can anyone help me with this?", unprocessed: true }
     ],
-    orderLines: [
-      { key: "Order No.", value: "H98765432" },
-      { key: "Hotel", value: "Grand Hyatt Shanghai" },
-      { key: "Stay", value: "Apr 27–29" }
-    ],
-    requestLines: [{ key: "Final Need", value: "Hotel Cancellation", highlight: true }],
+    quickChips: ["Cancel confirmed", "Processing now", "Need more info", "Escalate"],
+    requestHeadline: "Room Upgrade Inquiry",
+    requestSubtext: "User wants to upgrade to suite — AI unable to process",
     unprocessedCards: [
-      { text: "The hotel was really bad last time too", tag: "Previous bad experience" },
-      { text: "Can you make sure I get a full refund?", tag: "Specific refund request" }
+      { text: "I want to upgrade to a suite", tag: "Upgrade request" },
+      { text: "I want to know if I can upgrade and how much it costs", tag: "Pricing inquiry" },
+      { text: "Can anyone help me with this?", tag: "Frustration expressed" }
     ],
     steps: [
-      { done: true, text: "Order identified" },
-      { done: true, text: "Cancellation confirmed" },
-      { done: false, text: "Process refund (pending)" }
+      { status: "done", text: "Order identified" },
+      { status: "warning", text: "Request unrecognized" },
+      { status: "pending", text: "Agent assistance needed" }
     ],
-    primaryAction: "Confirm Cancellation",
-    secondaryAction: "Escalate Case",
-    quickChips: ["Refund confirmed", "Need more info", "Processing now"]
+    manualHandlingNote: "This case requires manual handling. Use the chat below to assist the customer."
   },
   "3": {
+    initials: "WF",
     userName: "Wang Fang",
     issue: "Order Inquiry",
+    timer: "01:09",
     waitDisplay: "0m 48s",
-    priority: { variant: "standard", label: "Standard" },
+    priorityLabel: "Standard",
+    priorityHigh: false,
+    orderHeader: { no: "C87654321", route: "Shanghai → Beijing", departure: "Apr 28, 14:00" },
     messages: [
       { kind: "user", text: "I'd like to check my order status" },
-      {
-        kind: "ai",
-        text: "Found your order: Flight C87654321, Shanghai→Beijing"
-      },
-      {
-        kind: "user",
-        text: "I've been waiting for 3 days already",
-        unprocessed: true
-      },
-      {
-        kind: "ai",
-        text: "Your order status is: Confirmed. Departure April 28, 14:00."
-      },
+      { kind: "ai", text: "Found your order: Flight C87654321, Shanghai→Beijing" },
+      { kind: "user", text: "I've been waiting for 3 days already", unprocessed: true },
+      { kind: "ai", text: "Your order status is: Confirmed. Departure April 28, 14:00." },
       { kind: "user", text: "OK thanks" }
     ],
-    orderLines: [
-      { key: "Order No.", value: "C87654321" },
-      { key: "Route", value: "Shanghai → Beijing" }
-    ],
-    requestLines: [{ key: "Final Need", value: "Order Status Check", highlight: true }],
-    unprocessedCards: [
-      { text: "I've been waiting for 3 days already", tag: "Waiting frustration" }
-    ],
+    quickChips: ["Status shared", "Processing now", "Need more info", "Escalate"],
+    requestHeadline: "Order Status Check",
+    requestSubtext: "Customer needed status clarity after a long wait",
+    unprocessedCards: [{ text: "I've been waiting for 3 days already", tag: "Waiting frustration" }],
     steps: [
-      { done: true, text: "Order identified" },
-      { done: true, text: "Status checked" },
-      { done: false, text: "Follow up (pending)" }
+      { status: "done", text: "Order identified" },
+      { status: "done", text: "Rebooking reviewed" },
+      { status: "done", text: "Status confirmed" },
+      { status: "pending", text: "Agent processing" }
     ],
-    primaryAction: "Mark Resolved",
-    secondaryAction: "Escalate Case",
-    quickChips: ["Thanks sent", "Need follow-up", "Closing chat"]
+    primaryActionLabel: "Mark Resolved",
+    secondaryActionLabel: "Escalate Case"
   }
 };
 
@@ -191,7 +147,7 @@ const DEFAULT_SESSION_ID = "1";
 
 function getChatSession(sessionId) {
   const id = sessionId && CHAT_SESSIONS[sessionId] ? sessionId : DEFAULT_SESSION_ID;
-  return { id, data: CHAT_SESSIONS[id] };
+  return CHAT_SESSIONS[id];
 }
 
 function RobotLogoIcon() {
@@ -208,50 +164,73 @@ function RobotLogoIcon() {
 function renderHistoryMessage(msg, i) {
   if (msg.kind === "user") {
     return (
-      <div key={i} className={styles.msgBlock}>
-        <div className={styles.msgRowUser}>
-          <div>
-            <div className={styles.userBubble}>{msg.text}</div>
-            {msg.unprocessed && <div className={styles.unprocessedTag}>⚠ Unprocessed by AI</div>}
-          </div>
+      <div key={i} className={styles.historyMsgLeft}>
+        <div>
+          <div className={styles.historyUserBubble}>{msg.text}</div>
+          {msg.unprocessed && <div className={styles.unprocessedTag}>⚠ Unprocessed</div>}
         </div>
       </div>
     );
   }
-  if (msg.kind === "ai") {
+  return (
+    <div key={i} className={styles.historyMsgRight}>
+      <div className={styles.aiLabel}>AI</div>
+      <div className={msg.kind === "aiCard" ? styles.historyAiCard : styles.historyAiBubble}>{msg.text}</div>
+    </div>
+  );
+}
+
+function renderAgentUserMessage(msg, i) {
+  if (msg.sender === "agent") {
     return (
-      <div key={i} className={styles.msgBlock}>
-        <div className={styles.msgRowAi}>
-          <span className={styles.aiLabel}>AI</span>
-          <div className={styles.aiBubble}>{msg.text}</div>
+      <div key={i} className={styles.liveMsgRowRight}>
+        <div>
+          <div className={styles.liveAgentLabel}>Agent</div>
+          <div className={styles.liveAgentBubble}>{msg.text}</div>
         </div>
       </div>
     );
   }
-  if (msg.kind === "aiCard") {
-    return (
-      <div key={i} className={styles.msgBlock}>
-        <div className={styles.msgRowAi}>
-          <span className={styles.aiLabel}>AI</span>
-          <div className={styles.bookingCard}>{msg.text}</div>
-        </div>
-      </div>
-    );
-  }
-  return null;
+  return (
+    <div key={i} className={styles.liveMsgRowLeft}>
+      <div className={styles.liveUserBubble}>{msg.text}</div>
+    </div>
+  );
 }
 
 export function AgentChat() {
   const navigate = useNavigate();
   const { sessionId } = useParams();
-  const [replyDraft, setReplyDraft] = useState("");
+  const session = useMemo(() => getChatSession(sessionId), [sessionId]);
 
-  const { data: session } = useMemo(() => getChatSession(sessionId), [sessionId]);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
+  const [liveMessages, setLiveMessages] = useState([]);
+  const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    setReplyDraft("");
+    setIsHistoryOpen(false);
+    setIsSummaryExpanded(true);
+    setLiveMessages([]);
+    setToastMessage("");
+  }, [session]);
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timer = window.setTimeout(() => navigate("/agent"), 2000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage, navigate]);
 
   const placeholder = `Type your reply to ${session.userName}...`;
 
-  const priorityClass =
-    session.priority.variant === "high" ? styles.priorityBadge : styles.priorityBadgeStandard;
+  const handleSend = () => {
+    const trimmed = replyDraft.trim();
+    if (!trimmed) return;
+    setLiveMessages((prev) => [...prev, { sender: "agent", text: trimmed }]);
+    setReplyDraft("");
+  };
 
   return (
     <div className={dash.shell}>
@@ -261,7 +240,6 @@ export function AgentChat() {
             <RobotLogoIcon />
             <span>AI Support</span>
           </div>
-
           <div className={dash.agentBlock}>
             <div className={dash.agentAvatar} aria-hidden="true" />
             <div className={dash.agentMeta}>
@@ -271,7 +249,6 @@ export function AgentChat() {
               </span>
             </div>
           </div>
-
           <nav className={dash.nav} aria-label="Agent navigation">
             <Link to="/agent" className={`${dash.navItem} ${styles.navItemLink}`}>
               📋 Work Queue
@@ -287,7 +264,6 @@ export function AgentChat() {
             </button>
           </nav>
         </div>
-
         <button type="button" className={dash.logout}>
           Logout
         </button>
@@ -295,57 +271,128 @@ export function AgentChat() {
 
       <div className={dash.rightWrap}>
         <header className={styles.chatHeader}>
-          <div className={styles.chatHeaderLeft}>
-            <button type="button" className={styles.backBtn} aria-label="Back to queue" onClick={() => navigate("/agent")}>
-              ←
+          <div className={styles.chatHeaderTopRow}>
+            <button type="button" className={styles.backBtn} onClick={() => navigate("/agent")}>
+              ← Back
             </button>
+            <span className={styles.userAvatar}>{session.initials}</span>
             <h1 className={styles.userTitle}>{session.userName}</h1>
             <span className={styles.issuePill}>{session.issue}</span>
+            <span className={styles.headerStatus}>
+              <span className={styles.sessionDot} />
+              Session Active
+            </span>
+            <span className={styles.timer}>{session.timer}</span>
           </div>
-          <div className={styles.chatHeaderCenter}>
-            <span className={styles.sessionDot} aria-hidden="true" />
-            Session Active
-          </div>
-          <div className={styles.chatHeaderRight}>
-            <button type="button" className={styles.closeSessionBtn} onClick={() => navigate("/agent")}>
-              Close Session
-            </button>
-            <span className={styles.timer} aria-label="Session timer">
-              04:23
+          <div className={styles.chatHeaderMetaRow}>
+            <span>Order: {session.orderHeader.no}</span>
+            <span>|</span>
+            <span>{session.orderHeader.route}</span>
+            <span>|</span>
+            <span>{session.orderHeader.departure}</span>
+            <span>|</span>
+            <span>Wait: {session.waitDisplay}</span>
+            <span>|</span>
+            <span>
+              Priority:{" "}
+              <span className={session.priorityHigh ? styles.priorityBadge : styles.priorityBadgeStandard}>
+                {session.priorityLabel}
+              </span>
             </span>
           </div>
         </header>
 
-        <div className={styles.mainColumns}>
-          <section className={styles.colHistory} aria-label="Full conversation">
-            <div className={styles.columnHeader}>
-              <h2 className={styles.columnTitle}>Full Conversation</h2>
-              <p className={styles.columnSubtitle}>All messages including unprocessed</p>
-            </div>
-
-            <div className={styles.historyScroll}>
-              {session.messages.map((m, i) => renderHistoryMessage(m, i))}
-              <div className={styles.systemDivider}>
-                <span className={styles.systemDividerLine} aria-hidden="true" />
-                <span>— Transferred to human agent —</span>
-                <span className={styles.systemDividerLine} aria-hidden="true" />
-              </div>
-            </div>
-
-            <div className={styles.historyFooter}>
-              <div className={styles.replyInputRow}>
-                <input
-                  type="text"
-                  className={styles.replyInput}
-                  placeholder={placeholder}
-                  value={replyDraft}
-                  onChange={(e) => setReplyDraft(e.target.value)}
-                  aria-label={placeholder}
-                />
-                <button type="button" className={styles.sendBtn}>
-                  Send
+        <div className={styles.mainLayout}>
+          <section className={`${styles.chatWorkspace} ${isHistoryOpen ? styles.chatWorkspaceWithHistory : styles.chatWorkspaceFull}`}>
+            <div className={styles.summaryCard}>
+              <div className={styles.summaryCardHeader}>
+                <div className={styles.summaryCardTitle}>AI Summary — {session.userName} · {session.issue}</div>
+                <button
+                  type="button"
+                  className={styles.summaryCollapseBtn}
+                  onClick={() => setIsSummaryExpanded((prev) => !prev)}
+                >
+                  {isSummaryExpanded ? "▲ Collapse" : "▼ Expand"}
                 </button>
               </div>
+
+              {isSummaryExpanded && (
+                <div className={styles.summaryCardBody}>
+                  <section className={styles.summarySection}>
+                    <div className={styles.summarySectionLabel}>Customer Request</div>
+                    <div className={styles.requestHeadline}>{session.requestHeadline}</div>
+                    <div className={styles.requestSubtext}>{session.requestSubtext}</div>
+                  </section>
+
+                  <section className={`${styles.summarySection} ${styles.attentionSection}`}>
+                    <div className={styles.attentionTitle}>⚠ Needs Your Attention</div>
+                    {session.unprocessedCards.map((card) => (
+                      <div key={card.text} className={styles.attentionItem}>
+                        <p className={styles.attentionText}>{card.text}</p>
+                        <span className={styles.unprocessedCardTag}>{card.tag}</span>
+                      </div>
+                    ))}
+                    <p className={styles.summaryNote}>
+                      {session.manualHandlingNote
+                        ? "AI could not handle this request — manual assistance required"
+                        : "Not handled by AI — please address directly"}
+                    </p>
+                  </section>
+
+                  <section className={styles.summarySection}>
+                    <div className={styles.summarySectionLabel}>Progress</div>
+                    <div className={styles.horizontalStepper}>
+                      {session.steps.map((step, index) => (
+                        <div key={step.text} className={styles.stepItemInline}>
+                          <span
+                            className={
+                              step.status === "done"
+                                ? styles.stepDone
+                                : step.status === "warning"
+                                ? styles.stepWarning
+                                : styles.stepCurrent
+                            }
+                          >
+                            {step.status === "done" ? "✅" : step.status === "warning" ? "⚠" : "⏳"} {step.text}
+                          </span>
+                          {index < session.steps.length - 1 && <span className={styles.stepArrow}>→</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  {session.manualHandlingNote ? (
+                    <p className={styles.manualHandlingNote}>{session.manualHandlingNote}</p>
+                  ) : (
+                    <div className={styles.summaryActionRow}>
+                      <button
+                        type="button"
+                        className={styles.actionPrimary}
+                        onClick={() => setToastMessage("Refund confirmed. Case closed.")}
+                      >
+                        {session.primaryActionLabel}
+                      </button>
+                      <button type="button" className={styles.actionSecondary}>
+                        {session.secondaryActionLabel}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.liveMessagesArea}>
+              <div className={styles.liveMessagesScroll}>
+                <div className={styles.sessionStartDivider}>— Session started — Human agent connected —</div>
+                {liveMessages.length === 0 ? (
+                  <div className={styles.emptyState}>No messages yet. Start the conversation below.</div>
+                ) : (
+                  liveMessages.map((msg, i) => renderAgentUserMessage(msg, i))
+                )}
+              </div>
+            </div>
+
+            <div className={styles.inputBar}>
               <div className={styles.chipsRow}>
                 {session.quickChips.map((label) => (
                   <button key={label} type="button" className={styles.quickChip} onClick={() => setReplyDraft(label)}>
@@ -353,86 +400,55 @@ export function AgentChat() {
                   </button>
                 ))}
               </div>
+              <div className={styles.replyInputRow}>
+                <input
+                  type="text"
+                  className={styles.replyInput}
+                  placeholder={placeholder}
+                  value={replyDraft}
+                  onChange={(e) => setReplyDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSend();
+                  }}
+                />
+                <button type="button" className={styles.sendBtn} onClick={handleSend}>
+                  Send
+                </button>
+              </div>
             </div>
           </section>
 
-          <aside className={styles.colSummary} aria-label="AI summary">
-            <div className={`${styles.columnHeader} ${styles.columnHeaderSummary}`}>
-              <h2 className={`${styles.columnTitle} ${styles.columnTitleBlue}`}>AI Summary</h2>
-              <p className={styles.columnSubtitle}>Auto-generated</p>
-            </div>
-
-            <div className={styles.summaryScroll}>
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionLabel}>Customer</div>
-                <div className={styles.summaryRow}>
-                  <span className={styles.summaryKey}>Name:</span> {session.userName}
-                </div>
-                <div className={styles.summaryRow}>
-                  <span className={styles.summaryKey}>Wait time:</span> {session.waitDisplay}
-                </div>
-                <div className={styles.summaryRow}>
-                  <span className={styles.summaryKey}>Priority:</span>{" "}
-                  <span className={priorityClass}>{session.priority.label}</span>
-                </div>
-              </div>
-
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionLabel}>Order Identified</div>
-                {session.orderLines.map((line) => (
-                  <div key={line.key} className={styles.summaryRow}>
-                    <span className={styles.summaryKey}>{line.key}:</span> {line.value}
+          <aside className={`${styles.historyPanel} ${isHistoryOpen ? styles.historyPanelOpen : styles.historyPanelClosed}`}>
+            {isHistoryOpen ? (
+              <>
+                <div className={styles.historyHeader}>
+                  <div>
+                    <h3 className={styles.historyTitle}>Chat History</h3>
+                    <p className={styles.historySubtitle}>AI & User conversation</p>
                   </div>
-                ))}
-              </div>
-
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionLabel}>Request</div>
-                {session.requestLines.map((line) => (
-                  <div key={line.key} className={styles.summaryRow}>
-                    <span className={styles.summaryKey}>{line.key}:</span>{" "}
-                    {line.highlight ? <span className={styles.valBlue}>{line.value}</span> : line.value}
-                  </div>
-                ))}
-              </div>
-
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionTitleOrange}>⚠ Unprocessed Messages</div>
-                {session.unprocessedCards.map((card) => (
-                  <div key={card.text} className={styles.unprocessedCard}>
-                    <p className={styles.unprocessedCardText}>{card.text}</p>
-                    <span className={styles.unprocessedCardTag}>{card.tag}</span>
-                  </div>
-                ))}
-                <p className={styles.summaryNote}>These messages were not handled by AI. Please address them.</p>
-              </div>
-
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionLabel}>Steps Completed</div>
-                <ul className={styles.stepsList}>
-                  {session.steps.map((step) => (
-                    <li key={step.text} className={step.done ? styles.stepDone : styles.stepPending}>
-                      {step.done ? "✓" : "○"} {step.text}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className={styles.summarySection}>
-                <div className={styles.summarySectionLabel}>Actions</div>
-                <div className={styles.actionsBlock}>
-                  <button type="button" className={styles.actionPrimary}>
-                    {session.primaryAction}
-                  </button>
-                  <button type="button" className={styles.actionSecondary}>
-                    {session.secondaryAction}
+                  <button type="button" className={styles.historyCollapseBtn} onClick={() => setIsHistoryOpen(false)}>
+                    ›
                   </button>
                 </div>
-              </div>
-            </div>
+                <div className={styles.historyScroll}>
+                  {session.messages.map((msg, i) => renderHistoryMessage(msg, i))}
+                  <div className={styles.historyTransferDivider}>— Transferred to human agent —</div>
+                </div>
+              </>
+            ) : (
+              <button type="button" className={styles.historyCollapsedTab} onClick={() => setIsHistoryOpen(true)}>
+                Chat History
+              </button>
+            )}
           </aside>
         </div>
       </div>
+
+      {toastMessage && (
+        <div className={styles.toast} role="status" aria-live="polite">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
