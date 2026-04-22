@@ -503,19 +503,6 @@ export function Page4Confirmation() {
         )}
 
         <footer className={appStyles.bottomSection}>
-          <div className={appStyles.chipsRow} role="list" aria-label="Quick tags">
-            {QUICK_CHIPS.map((chip) => (
-              <button
-                key={chip.label}
-                type="button"
-                className={appStyles.quickChip}
-                onClick={() => setInputValue(chip.message)}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
           <div className={appStyles.inputBar}>
             <button type="button" className={appStyles.micButton} aria-label="Use microphone">
               <svg viewBox="0 0 24 24" className={appStyles.micIcon} xmlns="http://www.w3.org/2000/svg">
