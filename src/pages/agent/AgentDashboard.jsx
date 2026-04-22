@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./AgentDashboard.module.css";
 
 const WAITING_SESSIONS = [
@@ -93,9 +93,6 @@ export function AgentDashboard() {
             <button type="button" className={styles.navItem}>
               💬 Active Chats
             </button>
-            <Link to="/agent/history" className={`${styles.navItem} ${styles.navItemLink}`}>
-              🕐 History
-            </Link>
             <button type="button" className={styles.navItem}>
               📊 Statistics
             </button>

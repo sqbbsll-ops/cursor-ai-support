@@ -4,6 +4,7 @@ import appStyles from "../App.module.css";
 import styles from "./Page2.module.css";
 import { TopNav } from "../components/TopNav.jsx";
 import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
+import { SessionHistoryList } from "../components/SessionHistoryList.jsx";
 import {
   buildFlightBookingMessageHistory,
   detectIntent,
@@ -608,6 +609,19 @@ export function Page2Understanding() {
                 <p className={styles.sheetNote}>
                   Key information from this session is being recorded to ensure seamless service continuity.
                 </p>
+
+                <section className={styles.sheetSection}>
+                  <h3 className={styles.sheetSectionTitle}>Session History</h3>
+                  <SessionHistoryList
+                    rows={[
+                      { time: "Just now", text: "Refund request submitted" },
+                      { time: "2 min ago", text: "Confirmed refund over rebooking" },
+                      { time: "3 min ago", text: "Checked rebooking options (CNY 120 fee)" },
+                      { time: "4 min ago", text: "Flight order C12345678 identified" },
+                      { time: "5 min ago", text: "Started session" }
+                    ]}
+                  />
+                </section>
               </div>
             </div>
           </>

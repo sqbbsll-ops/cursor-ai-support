@@ -243,7 +243,7 @@
 
 .sheetTitle {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -291,7 +291,7 @@
 
 .sheetSectionTitle {
   margin: 0 0 10px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #8c8c8c;
   text-transform: uppercase;
@@ -303,7 +303,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.45;
   margin-bottom: 8px;
 }
@@ -341,7 +341,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
@@ -382,7 +382,7 @@
 
 .sheetNote {
   margin: 20px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #8c8c8c;
   font-style: italic;
   line-height: 1.5;

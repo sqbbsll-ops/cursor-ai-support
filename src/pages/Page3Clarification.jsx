@@ -5,6 +5,7 @@ import styles from "./Page3.module.css";
 import { TopNav } from "../components/TopNav.jsx";
 import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
 import { BookingOfferMessage } from "../components/BookingOfferMessage.jsx";
+import { SessionHistoryList } from "../components/SessionHistoryList.jsx";
 import {
   detectIntent,
   HUMAN_AGENT_CONTINUE_AI_TEXT,
@@ -622,6 +623,48 @@ export function Page3Clarification() {
                   </div>
                 </section>
 
+                {(choice === "refund" || (hasSwitched && showAi6)) && (
+                  <section className={styles.sheetSection}>
+                    <h3 className={styles.sheetSectionTitle}>Refund Details</h3>
+                    <div
+                      style={{
+                        background: "#F6FFED",
+                        border: "1px solid #B7EB8F",
+                        borderRadius: "8px",
+                        padding: "12px"
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "baseline",
+                          marginBottom: "6px"
+                        }}
+                      >
+                        <span style={{ color: "#595959", fontSize: "14px" }}>Refund Amount</span>
+                        <span style={{ color: "#52C41A", fontWeight: "bold", fontSize: "18px" }}>
+                          CNY 680
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: "6px"
+                        }}
+                      >
+                        <span style={{ color: "#595959", fontSize: "13px" }}>Processing Fee</span>
+                        <span style={{ color: "#595959", fontSize: "13px" }}>CNY 50</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "#595959", fontSize: "13px" }}>Timeline</span>
+                        <span style={{ color: "#595959", fontSize: "13px" }}>3-5 business days</span>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
                 <section className={styles.sheetSection}>
                   <h3 className={styles.sheetSectionTitle}>Order Info</h3>
                   <div className={styles.sheetRow}>
@@ -677,6 +720,19 @@ export function Page3Clarification() {
                 <p className={styles.sheetNote}>
                   The system has recorded your decision process. All key steps will be shared with the human agent if needed.
                 </p>
+
+                <section className={styles.sheetSection}>
+                  <h3 className={styles.sheetSectionTitle}>Session History</h3>
+                  <SessionHistoryList
+                    rows={[
+                      { time: "Just now", text: "Refund request submitted" },
+                      { time: "2 min ago", text: "Confirmed refund over rebooking" },
+                      { time: "3 min ago", text: "Checked rebooking options (CNY 120 fee)" },
+                      { time: "4 min ago", text: "Flight order C12345678 identified" },
+                      { time: "5 min ago", text: "Started session" }
+                    ]}
+                  />
+                </section>
               </div>
             </div>
           </>
