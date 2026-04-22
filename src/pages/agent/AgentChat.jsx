@@ -9,6 +9,21 @@ import styles from "./AgentChat.module.css";
 /** @typedef {{ key: string, value: string }} OrderLine */
 
 /**
+ * @typedef {
+ *   | {
+ *       variant: 'refund';
+ *       amountLabel: string;
+ *       amountValue: string;
+ *       lines: { key: string; value: string }[];
+ *     }
+ *   | {
+ *       variant: 'estimate';
+ *       note: string;
+ *     }
+ * } FinancialDetails
+ */
+
+/**
  * @typedef {{
  *   initials: string;
  *   userName: string;
@@ -22,11 +37,15 @@ import styles from "./AgentChat.module.css";
  *   quickChips: string[];
  *   requestHeadline: string;
  *   requestSubtext: string;
+ *   financial?: FinancialDetails;
  *   unprocessedCards: UnprocessedCard[];
  *   steps: StepItem[];
  *   primaryActionLabel?: string;
  *   secondaryActionLabel?: string;
  *   manualHandlingNote?: string;
+ *   hasExecutionCheckbox?: boolean;
+ *   executionPendingLabel?: string;
+ *   executionDoneLabel?: string;
  * }} ChatSessionData
  */
 
@@ -60,6 +79,16 @@ const CHAT_SESSIONS = {
     quickChips: ["Refund confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Refund Application",
     requestSubtext: "Checked rebooking first → confirmed refund",
+    financial: {
+      variant: "refund",
+      amountLabel: "Refund Amount",
+      amountValue: "CNY 680",
+      lines: [
+        { key: "Processing Fee", value: "CNY 50" },
+        { key: "Timeline", value: "3-5 business days" },
+        { key: "Payment method", value: "Original payment" }
+      ]
+    },
     unprocessedCards: [
       { text: "I'm in a rush, need this done today", tag: "Urgency" },
       { text: "I tried calling yesterday", tag: "Prior contact" }
@@ -71,7 +100,10 @@ const CHAT_SESSIONS = {
       { status: "pending", text: "Agent processing" }
     ],
     primaryActionLabel: "Confirm & Process Refund",
-    secondaryActionLabel: "Escalate Case"
+    secondaryActionLabel: "Escalate Case",
+    hasExecutionCheckbox: true,
+    executionPendingLabel: "Mark as executed — confirm refund has been processed",
+    executionDoneLabel: "Refund executed and confirmed"
   },
   "2": {
     initials: "LM",
@@ -100,6 +132,10 @@ const CHAT_SESSIONS = {
     quickChips: ["Cancel confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Room Upgrade Inquiry",
     requestSubtext: "User wants to upgrade to suite — AI unable to process",
+    financial: {
+      variant: "estimate",
+      note: "Estimated upgrade cost: To be confirmed"
+    },
     unprocessedCards: [
       { text: "I want to upgrade to a suite", tag: "Upgrade request" },
       { text: "I want to know if I can upgrade and how much it costs", tag: "Pricing inquiry" },
@@ -208,6 +244,7 @@ export function AgentChat() {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
   const [liveMessages, setLiveMessages] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [isExecuted, setIsExecuted] = useState(false);
 
   useEffect(() => {
     setReplyDraft("");
@@ -215,6 +252,7 @@ export function AgentChat() {
     setIsSummaryExpanded(true);
     setLiveMessages([]);
     setToastMessage("");
+    setIsExecuted(false);
   }, [session]);
 
   useEffect(() => {
@@ -256,6 +294,9 @@ export function AgentChat() {
             <button type="button" className={`${dash.navItem} ${dash.navItemActive}`}>
               💬 Active Chats
             </button>
+            <Link to="/agent/history" className={`${dash.navItem} ${styles.navItemLink}`}>
+              🕐 History
+            </Link>
             <button type="button" className={dash.navItem}>
               📊 Statistics
             </button>
@@ -324,6 +365,38 @@ export function AgentChat() {
                     <div className={styles.requestSubtext}>{session.requestSubtext}</div>
                   </section>
 
+                  {session.financial && (
+                    <section className={styles.summarySection}>
+                      <div className={styles.summarySectionLabel}>
+                        {session.financial.variant === "refund" ? "Refund Details" : "Cost Estimate"}
+                      </div>
+                      <div className={styles.financialBox}>
+                        {session.financial.variant === "refund" ? (
+                          <>
+                            <div className={styles.financialAmountRow}>
+                              <span className={styles.financialAmountLabel}>
+                                {session.financial.amountLabel}
+                              </span>
+                              <span className={styles.financialAmountValue}>
+                                {session.financial.amountValue}
+                              </span>
+                            </div>
+                            <ul className={styles.financialLines}>
+                              {session.financial.lines.map((line) => (
+                                <li key={line.key} className={styles.financialLine}>
+                                  <span className={styles.financialLineKey}>{line.key}:</span>
+                                  <span className={styles.financialLineValue}>{line.value}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : (
+                          <div className={styles.financialEstimate}>{session.financial.note}</div>
+                        )}
+                      </div>
+                    </section>
+                  )}
+
                   <section className={`${styles.summarySection} ${styles.attentionSection}`}>
                     <div className={styles.attentionTitle}>⚠ Needs Your Attention</div>
                     {session.unprocessedCards.map((card) => (
@@ -364,18 +437,38 @@ export function AgentChat() {
                   {session.manualHandlingNote ? (
                     <p className={styles.manualHandlingNote}>{session.manualHandlingNote}</p>
                   ) : (
-                    <div className={styles.summaryActionRow}>
-                      <button
-                        type="button"
-                        className={styles.actionPrimary}
-                        onClick={() => setToastMessage("Refund confirmed. Case closed.")}
-                      >
-                        {session.primaryActionLabel}
-                      </button>
-                      <button type="button" className={styles.actionSecondary}>
-                        {session.secondaryActionLabel}
-                      </button>
-                    </div>
+                    <>
+                      <div className={styles.summaryActionRow}>
+                        <button
+                          type="button"
+                          className={styles.actionPrimary}
+                          onClick={() => setToastMessage("Refund confirmed. Case closed.")}
+                        >
+                          {session.primaryActionLabel}
+                        </button>
+                        <button type="button" className={styles.actionSecondary}>
+                          {session.secondaryActionLabel}
+                        </button>
+                      </div>
+
+                      {session.hasExecutionCheckbox && (
+                        <button
+                          type="button"
+                          className={`${styles.executionToggle} ${isExecuted ? styles.executionToggleDone : ""}`}
+                          onClick={() => setIsExecuted((prev) => !prev)}
+                          aria-pressed={isExecuted}
+                        >
+                          <span className={styles.executionCheckbox} aria-hidden="true">
+                            {isExecuted ? "✓" : ""}
+                          </span>
+                          <span className={styles.executionLabel}>
+                            {isExecuted
+                              ? `✓ ${session.executionDoneLabel}`
+                              : session.executionPendingLabel}
+                          </span>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}
