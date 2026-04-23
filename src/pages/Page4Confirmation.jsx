@@ -65,7 +65,7 @@ export function Page4Confirmation() {
   const handleEditClick = () => {
     if (contentRef.current) {
       const h = contentRef.current.getBoundingClientRect().height;
-      setContentHeight(Math.ceil(h));
+      setContentHeight(Math.ceil(h) + 24);
     }
     if (cardRef.current) {
       const ch = cardRef.current.getBoundingClientRect().height;
