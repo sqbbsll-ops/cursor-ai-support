@@ -337,6 +337,7 @@ export function AgentChat() {
 
         <div className={styles.mainLayout}>
           <section className={`${styles.chatWorkspace} ${isHistoryOpen ? styles.chatWorkspaceWithHistory : styles.chatWorkspaceFull}`}>
+            <div className={styles.chatScroll}>
             <div className={styles.summaryCard}>
               <div className={styles.summaryCardHeader}>
                 <div className={styles.summaryCardTitle}>AI Summary — {session.userName} · {session.issue}</div>
@@ -464,7 +465,7 @@ export function AgentChat() {
             </div>
 
             <div className={styles.liveMessagesArea}>
-              <div className={styles.liveMessagesScroll}>
+              <div className={styles.liveMessagesInner}>
                 <div className={styles.sessionStartDivider}>— Session started — Human agent connected —</div>
                 {liveMessages.length === 0 ? (
                   <div className={styles.emptyState}>No messages yet. Start the conversation below.</div>
@@ -472,6 +473,7 @@ export function AgentChat() {
                   liveMessages.map((msg, i) => renderAgentUserMessage(msg, i))
                 )}
               </div>
+            </div>
             </div>
 
             <div className={styles.inputBar}>
