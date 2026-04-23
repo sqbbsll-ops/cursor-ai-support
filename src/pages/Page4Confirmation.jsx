@@ -30,6 +30,41 @@ const DEFAULT_EDIT_VALUES = {
   refund: "CNY 680 after CNY 50 processing fee, timeline 3-5 business days."
 };
 
+const EDIT_FIELD_STYLE = {
+  width: "100%",
+  border: "1.5px solid #1677FF",
+  borderRadius: "6px",
+  background: "white",
+  fontSize: "14px",
+  color: "#595959",
+  outline: "none",
+  padding: "6px 8px",
+  boxSizing: "border-box",
+  fontFamily: "inherit",
+  marginTop: "4px"
+};
+
+const EDIT_ROW_STYLE = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "2px",
+  marginBottom: "10px"
+};
+
+const READ_ROW_STYLE = {
+  display: "flex",
+  gap: "8px",
+  alignItems: "flex-start"
+};
+
+const LABEL_STYLE = {
+  fontWeight: 600,
+  fontSize: "14px",
+  color: "#1f1f1f"
+};
+
+const READ_LABEL_STYLE = { ...LABEL_STYLE, minWidth: "80px" };
+
 function buildSummaryText(values) {
   return [
     `Flight: ${values.flight}`,
@@ -181,31 +216,26 @@ export function Page4Confirmation() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px",
+                      gap: isEditing ? 0 : "10px",
                       padding: "12px",
-                      minHeight: "140px"
+                      width: "100%",
+                      minHeight: "140px",
+                      boxSizing: "border-box"
                     }}
                   >
-                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
-                        Flight:
-                      </span>
-                      {isEditing ? (
+                    {isEditing ? (
+                      <div style={EDIT_ROW_STYLE}>
+                        <span style={LABEL_STYLE}>Flight:</span>
                         <select
                           value={editValues.flight}
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, flight: e.target.value }))
                           }
                           style={{
-                            flex: 1,
-                            border: "none",
-                            borderBottom: "1.5px solid #1677FF",
-                            background: "transparent",
-                            fontSize: "14px",
-                            color: "#595959",
-                            outline: "none",
+                            ...EDIT_FIELD_STYLE,
                             cursor: "pointer",
-                            padding: "2px 0"
+                            appearance: "auto",
+                            WebkitAppearance: "auto"
                           }}
                         >
                           <option value="Shanghai (PVG) → Beijing (PEK), April 28 at 14:00">
@@ -218,51 +248,48 @@ export function Page4Confirmation() {
                             Shanghai (PVG) → Chengdu (CTU), April 30 at 16:30
                           </option>
                         </select>
-                      ) : (
+                      </div>
+                    ) : (
+                      <div style={READ_ROW_STYLE}>
+                        <span style={READ_LABEL_STYLE}>Flight:</span>
                         <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
                           {editValues.flight}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
-                        Order:
-                      </span>
-                      {isEditing ? (
+                    {isEditing ? (
+                      <div style={EDIT_ROW_STYLE}>
+                        <span style={LABEL_STYLE}>Order:</span>
                         <select
                           value={editValues.order}
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, order: e.target.value }))
                           }
                           style={{
-                            flex: 1,
-                            border: "none",
-                            borderBottom: "1.5px solid #1677FF",
-                            background: "transparent",
-                            fontSize: "14px",
-                            color: "#595959",
-                            outline: "none",
+                            ...EDIT_FIELD_STYLE,
                             cursor: "pointer",
-                            padding: "2px 0"
+                            appearance: "auto",
+                            WebkitAppearance: "auto"
                           }}
                         >
                           <option value="C12345678">C12345678</option>
                           <option value="C87654321">C87654321</option>
                           <option value="H98765432">H98765432</option>
                         </select>
-                      ) : (
+                      </div>
+                    ) : (
+                      <div style={READ_ROW_STYLE}>
+                        <span style={READ_LABEL_STYLE}>Order:</span>
                         <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
                           {editValues.order}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
-                        Request:
-                      </span>
-                      {isEditing ? (
+                    {isEditing ? (
+                      <div style={EDIT_ROW_STYLE}>
+                        <span style={LABEL_STYLE}>Request:</span>
                         <textarea
                           value={editValues.request}
                           onChange={(e) =>
@@ -270,54 +297,41 @@ export function Page4Confirmation() {
                           }
                           rows={2}
                           style={{
-                            flex: 1,
-                            border: "none",
-                            borderBottom: "1.5px solid #1677FF",
-                            background: "transparent",
-                            fontSize: "14px",
-                            color: "#595959",
-                            outline: "none",
-                            resize: "none",
+                            ...EDIT_FIELD_STYLE,
                             lineHeight: "1.5",
-                            fontFamily: "inherit",
-                            padding: "2px 0"
+                            resize: "none"
                           }}
                         />
-                      ) : (
+                      </div>
+                    ) : (
+                      <div style={READ_ROW_STYLE}>
+                        <span style={READ_LABEL_STYLE}>Request:</span>
                         <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
                           {editValues.request}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
-                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
-                        Refund:
-                      </span>
-                      {isEditing ? (
+                    {isEditing ? (
+                      <div style={EDIT_ROW_STYLE}>
+                        <span style={LABEL_STYLE}>Refund:</span>
                         <input
                           type="text"
                           value={editValues.refund}
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, refund: e.target.value }))
                           }
-                          style={{
-                            flex: 1,
-                            border: "none",
-                            borderBottom: "1.5px solid #1677FF",
-                            background: "transparent",
-                            fontSize: "14px",
-                            color: "#595959",
-                            outline: "none",
-                            padding: "2px 0"
-                          }}
+                          style={EDIT_FIELD_STYLE}
                         />
-                      ) : (
+                      </div>
+                    ) : (
+                      <div style={READ_ROW_STYLE}>
+                        <span style={READ_LABEL_STYLE}>Refund:</span>
                         <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
                           {editValues.refund}
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <p
