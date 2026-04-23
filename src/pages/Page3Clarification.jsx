@@ -3,39 +3,15 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page3.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
 import { BookingOfferMessage } from "../components/BookingOfferMessage.jsx";
-import { SessionHistoryList } from "../components/SessionHistoryList.jsx";
 import {
   detectIntent,
   HUMAN_AGENT_CONTINUE_AI_TEXT,
   HUMAN_AGENT_PROMPT_TEXT,
-  MOCK_FLIGHT_BOOKING_ORDER,
-  QUICK_CHIPS
+  MOCK_FLIGHT_BOOKING_ORDER
 } from "../chatConstants.js";
 
 const ROUTE_LINE = "Shanghai (PVG) → Beijing (PEK), April 28, 14:00";
-
-function StepDoneIcon() {
-  return (
-    <span className={styles.stepMarkDone} aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="9" fill="#52C41A" />
-        <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
-function StepFutureIcon() {
-  return (
-    <span className={styles.stepMarkFuture} aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="7" stroke="#D9D9D9" strokeWidth="1.5" fill="none" />
-      </svg>
-    </span>
-  );
-}
 
 function AiAvatarSmall() {
   return (
@@ -85,10 +61,6 @@ export function Page3Clarification() {
   const [typing6, setTyping6] = useState(false);
   const [showAi6, setShowAi6] = useState(false);
 
-  const [summarySelection, setSummarySelection] = useState("Rebooking");
-  const [summaryStatus, setSummaryStatus] = useState("Reviewing rebooking options");
-
-  const [summaryOpen, setSummaryOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [humanSegments, setHumanSegments] = useState([]);
 
@@ -98,37 +70,10 @@ export function Page3Clarification() {
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (summaryOpen) {
-      frame.style.overflow = "hidden";
-    } else {
-      frame.style.overflow = "";
-    }
-    return () => {
-      frame.style.overflow = "";
-    };
-  }, [summaryOpen]);
-
-  useEffect(() => {
-    if (summaryOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [summaryOpen]);
-
   const clearBranchTimeouts = useCallback(() => {
     branchTimeoutsRef.current.forEach(clearTimeout);
     branchTimeoutsRef.current = [];
   }, []);
-
-  const hasSwitched = showUserSwitch;
-  const hasRefundInfo = choice === "refund" ? showAi3 : showAi6;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -165,9 +110,6 @@ export function Page3Clarification() {
   useEffect(() => {
     if (choice !== "refund") return;
 
-    setSummarySelection("Refund Application");
-    setSummaryStatus("Checking refund policy...");
-
     const t1 = setTimeout(() => setTyping2(true), 600);
     const t2 = setTimeout(() => {
       setTyping2(false);
@@ -177,7 +119,6 @@ export function Page3Clarification() {
     const t4 = setTimeout(() => {
       setTyping3(false);
       setShowAi3(true);
-      setSummaryStatus("Awaiting your confirmation");
     }, 2400);
 
     return () => {
@@ -191,9 +132,6 @@ export function Page3Clarification() {
   useEffect(() => {
     if (choice !== "rebooking") return;
 
-    setSummarySelection("Rebooking");
-    setSummaryStatus("Reviewing rebooking options");
-
     const t1 = setTimeout(() => setTyping2(true), 600);
     const t2 = setTimeout(() => {
       setTyping2(false);
@@ -204,7 +142,6 @@ export function Page3Clarification() {
       setTyping3(false);
       setShowAi3(true);
       setShowRebookButtons(true);
-      setSummaryStatus("Awaiting your decision");
     }, 2400);
 
     return () => {
@@ -219,8 +156,6 @@ export function Page3Clarification() {
     clearBranchTimeouts();
     setShowRebookButtons(false);
     setShowUserSwitch(true);
-    setSummarySelection("Refund Application");
-    setSummaryStatus("Refund policy being checked");
 
     const a = setTimeout(() => setTyping5(true), 600);
     const b = setTimeout(() => {
@@ -231,7 +166,6 @@ export function Page3Clarification() {
     const d = setTimeout(() => {
       setTyping6(false);
       setShowAi6(true);
-      setSummaryStatus("Awaiting your confirmation");
     }, 2200);
 
     branchTimeoutsRef.current.push(a, b, c, d);
@@ -391,7 +325,6 @@ export function Page3Clarification() {
 
         <div
           className={styles.chatScroll}
-          style={{ overflow: summaryOpen ? "hidden" : "auto" }}
           role="log"
           aria-live="polite"
           aria-label="Conversation"
@@ -590,153 +523,6 @@ export function Page3Clarification() {
             <div ref={bottomRef} />
           </div>
         </div>
-
-        <FloatingSummaryWidget frameRef={frameRef} onOpenPanel={() => setSummaryOpen(true)} />
-
-        {summaryOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setSummaryOpen(false)} />
-            <div className={styles.sheetPanel} role="dialog" aria-labelledby="p3-summary-title">
-              <div className={styles.sheetHeader}>
-                <h2 id="p3-summary-title" className={styles.sheetTitle}>
-                  Service Summary
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setSummaryOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={styles.sheetBody}>
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Current Request</h3>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Service Type</span>
-                    <span className={styles.sheetVal}>Flight Booking</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Current Selection</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValHighlight}`}>{summarySelection}</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Status</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValWarning}`}>{summaryStatus}</span>
-                  </div>
-                </section>
-
-                {(choice === "refund" || (hasSwitched && showAi6)) && (
-                  <section className={styles.sheetSection}>
-                    <h3 className={styles.sheetSectionTitle}>Refund Details</h3>
-                    <div
-                      style={{
-                        background: "#F6FFED",
-                        border: "1px solid #B7EB8F",
-                        borderRadius: "8px",
-                        padding: "12px"
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "baseline",
-                          marginBottom: "6px"
-                        }}
-                      >
-                        <span style={{ color: "#595959", fontSize: "14px" }}>Refund Amount</span>
-                        <span style={{ color: "#52C41A", fontWeight: "bold", fontSize: "18px" }}>
-                          CNY 680
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: "6px"
-                        }}
-                      >
-                        <span style={{ color: "#595959", fontSize: "13px" }}>Processing Fee</span>
-                        <span style={{ color: "#595959", fontSize: "13px" }}>CNY 50</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "#595959", fontSize: "13px" }}>Timeline</span>
-                        <span style={{ color: "#595959", fontSize: "13px" }}>3-5 business days</span>
-                      </div>
-                    </div>
-                  </section>
-                )}
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Order Info</h3>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Order No.</span>
-                    <span className={styles.sheetVal}>C12345678</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Route</span>
-                    <span className={styles.sheetVal}>Shanghai → Beijing</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Departure</span>
-                    <span className={styles.sheetVal}>April 28, 14:00</span>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Decision History</h3>
-                  <div className={styles.decisionTimeline}>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund/rebooking request received</span>
-                    </div>
-                    {choice === "rebooking" && showAi3 && (
-                      <div className={styles.decisionRow}>
-                        <StepDoneIcon />
-                        <span>Rebooking options reviewed</span>
-                      </div>
-                    )}
-                    {hasSwitched && (
-                      <div className={styles.decisionRow}>
-                        <StepDoneIcon />
-                        <span>Changed mind — switched to refund</span>
-                      </div>
-                    )}
-                    {hasRefundInfo && (
-                      <div className={styles.decisionRow}>
-                        <span className={styles.pulseWrap}>
-                          <span className={styles.pulseDot} />
-                        </span>
-                        <span>Refund policy checked</span>
-                      </div>
-                    )}
-                    {hasRefundInfo && (
-                      <div className={`${styles.decisionRow} ${styles.decisionRowFuture}`}>
-                        <StepFutureIcon />
-                        <span>Awaiting final confirmation</span>
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <p className={styles.sheetNote}>
-                  The system has recorded your decision process. All key steps will be shared with the human agent if needed.
-                </p>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Session History</h3>
-                  <SessionHistoryList
-                    rows={[
-                      { time: "Just now", text: "Refund request submitted" },
-                      { time: "2 min ago", text: "Confirmed refund over rebooking" },
-                      { time: "3 min ago", text: "Checked rebooking options (CNY 120 fee)" },
-                      { time: "4 min ago", text: "Flight order C12345678 identified" },
-                      { time: "5 min ago", text: "Started session" }
-                    ]}
-                  />
-                </section>
-              </div>
-            </div>
-          </>
-        )}
 
         <footer className={appStyles.bottomSection}>
           <div className={appStyles.inputBar}>

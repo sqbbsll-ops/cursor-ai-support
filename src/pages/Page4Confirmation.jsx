@@ -3,32 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page4.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
-import { QUICK_CHIPS } from "../chatConstants.js";
-
-const MOCK_ORDERS = [
-  {
-    id: "1",
-    orderNo: "C12345678",
-    route: "Shanghai → Beijing",
-    departure: "April 28, 14:00",
-    sheetLabel: "Flight — Shanghai → Beijing, Apr 28"
-  },
-  {
-    id: "2",
-    orderNo: "C87654321",
-    route: "Beijing → Shanghai",
-    departure: "May 3, 14:00",
-    sheetLabel: "Flight — Beijing → Shanghai, May 3, Order #C87654321"
-  },
-  {
-    id: "3",
-    orderNo: "H98765432",
-    route: "Grand Hyatt Shanghai",
-    departure: "Apr 27–29",
-    sheetLabel: "Hotel — Grand Hyatt Shanghai, Apr 27-29, Order #H98765432"
-  }
-];
+import { DEFAULT_REQUEST_SUMMARY_TEXT } from "../chatConstants.js";
 
 function AiAvatarSmall() {
   return (
@@ -48,120 +23,44 @@ function AiAvatarSmall() {
   );
 }
 
-function SmallGreenCheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="9" cy="9" r="9" fill="#52C41A" />
-      <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function GrayCircleIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="9" cy="9" r="7" stroke="#D9D9D9" strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
-
-function HeaderConfirmedIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="9" cy="9" r="9" fill="#52C41A" />
-      <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function RowSelectedCheckIcon() {
-  return (
-    <svg className={styles.orderRowCheck} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="10" cy="10" r="10" fill="#1677FF" />
-      <path d="M6 10l2.5 2.5L14 7" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function StepDoneIcon() {
-  return (
-    <span className={styles.stepMarkDone} aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="9" fill="#52C41A" />
-        <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
-function getOrderById(id) {
-  return MOCK_ORDERS.find((o) => o.id === id) ?? MOCK_ORDERS[0];
-}
-
 export function Page4Confirmation() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [summaryOpen, setSummaryOpen] = useState(false);
-  const [orderSheetOpen, setOrderSheetOpen] = useState(false);
-  const [activeOrderId, setActiveOrderId] = useState("1");
-  const [pendingOrderId, setPendingOrderId] = useState("1");
+  const incomingState = location.state || {};
+
   const [confirmed, setConfirmed] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const frameRef = useRef(null);
+  const [summaryText, setSummaryText] = useState(
+    incomingState.userSummary || DEFAULT_REQUEST_SUMMARY_TEXT
+  );
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftText, setDraftText] = useState(summaryText);
+  const textareaRef = useRef(null);
   const scrollEndRef = useRef(null);
 
-  const activeOrder = useMemo(() => getOrderById(activeOrderId), [activeOrderId]);
-
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
-
-  const anySheetOpen = summaryOpen || orderSheetOpen;
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (anySheetOpen) {
-      frame.style.overflow = "hidden";
-    } else {
-      frame.style.overflow = "";
-    }
-    return () => {
-      frame.style.overflow = "";
-    };
-  }, [anySheetOpen]);
-
-  useEffect(() => {
-    if (anySheetOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [anySheetOpen]);
 
   const goPage3 = () => {
     navigate(-1);
   };
 
-  const handleEditInfo = goPage3;
-
-  const openOrderSheet = () => {
-    if (confirmed) return;
-    setPendingOrderId(activeOrderId);
-    setSummaryOpen(false);
-    setOrderSheetOpen(true);
+  const handleEditClick = () => {
+    setDraftText(summaryText);
+    setIsEditing(true);
   };
 
-  const openSummaryPanel = () => {
-    setOrderSheetOpen(false);
-    setSummaryOpen(true);
+  const handleDoneClick = () => {
+    const next = draftText.trim().length > 0 ? draftText : summaryText;
+    setSummaryText(next);
+    setIsEditing(false);
   };
 
-  const confirmOrderSelection = () => {
-    setActiveOrderId(pendingOrderId);
-    setOrderSheetOpen(false);
-  };
+  useEffect(() => {
+    if (isEditing) {
+      const t = requestAnimationFrame(() => textareaRef.current?.focus());
+      return () => cancelAnimationFrame(t);
+    }
+  }, [isEditing]);
 
   const handleConfirmTransfer = () => {
     setConfirmed(true);
@@ -170,19 +69,27 @@ export function Page4Confirmation() {
   useEffect(() => {
     if (!confirmed) return;
     const t = setTimeout(() => {
-      navigate("/page5", { state: { ...(location.state || {}), transferFromPage4: true } });
+      navigate("/page5", {
+        state: {
+          ...incomingState,
+          userSummary: summaryText,
+          transferFromPage4: true
+        }
+      });
     }, 1500);
     return () => clearTimeout(t);
-  }, [confirmed, navigate, location.state]);
+  }, [confirmed, navigate, incomingState, summaryText]);
 
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [confirmed, orderSheetOpen, summaryOpen]);
+  }, [confirmed, isEditing]);
 
   const handleSubmit = () => {
     const text = inputValue.trim();
     if (!text) return;
-    navigate("/page5", { state: { ...(location.state || {}), message: text } });
+    navigate("/page5", {
+      state: { ...incomingState, userSummary: summaryText, message: text }
+    });
     setInputValue("");
   };
 
@@ -193,17 +100,13 @@ export function Page4Confirmation() {
     }
   };
 
-  const stepsDone = ["Order identified", "Rebooking options reviewed", "Refund policy checked"];
-  const pendingSteps = ["Confirm final refund amount", "Process refund application"];
-
   return (
     <main className={appStyles.appShell}>
-      <section ref={frameRef} className={appStyles.mobileFrame}>
+      <section className={appStyles.mobileFrame}>
         <TopNav variant="chat" onBack={() => navigate(-1)} />
 
         <div
           className={styles.chatScroll}
-          style={{ overflow: anySheetOpen ? "hidden" : "auto" }}
           role="log"
           aria-live="polite"
           aria-label="Conversation"
@@ -229,100 +132,92 @@ export function Page4Confirmation() {
                 <div
                   className={`${styles.confirmCard} ${confirmed ? styles.confirmCardConfirmed : ""}`}
                 >
-                  <div className={styles.confirmCardHeaderBlock}>
-                    {confirmed ? (
-                      <div className={styles.confirmCardTitleRow}>
-                        <div className={styles.confirmCardTitle}>Transfer Summary</div>
-                        <div className={styles.confirmedBadge}>
-                          <HeaderConfirmedIcon />
-                          <span>Confirmed</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className={styles.confirmCardTitle}>Transfer Summary</div>
-                        <p className={styles.confirmCardSubtitle}>Please confirm your information</p>
-                      </>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                      marginBottom: "12px"
+                    }}
+                  >
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: "#1f1f1f"
+                      }}
+                    >
+                      Your Request Summary
+                    </h3>
+                    {!confirmed && (
+                      <button
+                        type="button"
+                        onClick={isEditing ? handleDoneClick : handleEditClick}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: "4px 8px",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: isEditing ? "#52C41A" : "#1677FF",
+                          cursor: "pointer"
+                        }}
+                      >
+                        {isEditing ? "Done" : "Edit"}
+                      </button>
                     )}
                   </div>
 
-                  <div className={styles.confirmSection}>
-                    <div className={styles.sectionHeaderRow}>
-                      <h3 className={styles.sectionTitlePlain}>Order Info</h3>
-                      <button
-                        type="button"
-                        className={styles.changeOrderBtn}
-                        onClick={openOrderSheet}
-                        disabled={confirmed}
-                      >
-                        Change Order ›
-                      </button>
-                    </div>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Order No.</span>
-                      <span className={styles.confirmVal}>{activeOrder.orderNo}</span>
-                    </div>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Route</span>
-                      <span className={styles.confirmVal}>{activeOrder.route}</span>
-                    </div>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Departure</span>
-                      <span className={styles.confirmVal}>{activeOrder.departure}</span>
-                    </div>
-                  </div>
+                  {isEditing ? (
+                    <textarea
+                      ref={textareaRef}
+                      value={draftText}
+                      onChange={(e) => setDraftText(e.target.value)}
+                      style={{
+                        width: "100%",
+                        minHeight: "120px",
+                        border: "1.5px solid #1677FF",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        fontSize: "15px",
+                        lineHeight: 1.6,
+                        color: "#1f1f1f",
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                        boxSizing: "border-box",
+                        outline: "none"
+                      }}
+                    />
+                  ) : (
+                    <p
+                      style={{
+                        margin: 0,
+                        padding: "12px",
+                        fontSize: "15px",
+                        lineHeight: 1.6,
+                        color: "#1f1f1f",
+                        background: "#FAFAFA",
+                        borderRadius: "8px",
+                        whiteSpace: "pre-wrap"
+                      }}
+                    >
+                      {summaryText}
+                    </p>
+                  )}
 
-                  <div className={styles.confirmSection}>
-                    <h3 className={styles.sectionTitlePlain} style={{ marginBottom: 8 }}>
-                      Your Request
-                    </h3>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Need</span>
-                      <span className={`${styles.confirmVal} ${styles.confirmValBlue}`}>Refund Application</span>
-                    </div>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Checked</span>
-                      <span className={styles.confirmVal}>Rebooking options</span>
-                    </div>
-                    <div className={styles.confirmRow}>
-                      <span className={styles.confirmKey}>Decision</span>
-                      <span className={`${styles.confirmVal} ${styles.confirmValBlue}`}>Confirmed refund</span>
-                    </div>
-                  </div>
-
-                  <div className={styles.confirmSection}>
-                    <h3 className={styles.sectionTitlePlain} style={{ marginBottom: 8 }}>
-                      Steps Done
-                    </h3>
-                    <div className={styles.compactList}>
-                      {stepsDone.map((label) => (
-                        <div key={label} className={styles.compactListItem}>
-                          <span className={styles.checkIconWrap}>
-                            <SmallGreenCheckIcon />
-                          </span>
-                          <span>{label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={styles.confirmSection}>
-                    <h3 className={styles.sectionTitlePlain} style={{ marginBottom: 8 }}>
-                      Pending
-                    </h3>
-                    <div className={styles.compactList}>
-                      {pendingSteps.map((label) => (
-                        <div key={label} className={styles.compactListItem}>
-                          <span className={styles.pendingIconWrap}>
-                            <GrayCircleIcon />
-                          </span>
-                          <span>{label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <p className={styles.confirmCardFooterNote}>This info will be shared with the human agent.</p>
+                  <p
+                    style={{
+                      margin: "12px 0 0",
+                      fontSize: "12px",
+                      color: "#8c8c8c",
+                      fontStyle: "italic",
+                      lineHeight: 1.5
+                    }}
+                  >
+                    You can edit this summary to make sure your situation is accurately represented before connecting to a human agent.
+                  </p>
                 </div>
               </div>
             </div>
@@ -362,9 +257,11 @@ export function Page4Confirmation() {
                     border: "none",
                     fontSize: "15px",
                     fontWeight: "500",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    opacity: isEditing ? 0.5 : 1
                   }}
                   onClick={handleConfirmTransfer}
+                  disabled={isEditing}
                 >
                   Confirm & Transfer to Human Agent
                 </button>
@@ -381,7 +278,7 @@ export function Page4Confirmation() {
                     fontWeight: "500",
                     cursor: "pointer"
                   }}
-                  onClick={handleEditInfo}
+                  onClick={goPage3}
                 >
                   Edit Information
                 </button>
@@ -391,116 +288,6 @@ export function Page4Confirmation() {
             <div ref={scrollEndRef} />
           </div>
         </div>
-
-        <FloatingSummaryWidget frameRef={frameRef} onOpenPanel={openSummaryPanel} />
-
-        {summaryOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setSummaryOpen(false)} />
-            <div className={styles.sheetPanel} role="dialog" aria-labelledby="p4-summary-title">
-              <div className={styles.sheetHeader}>
-                <h2 id="p4-summary-title" className={styles.sheetTitle}>
-                  Service Summary
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setSummaryOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={styles.sheetBody}>
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Current Request</h3>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Current Selection</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValHighlight}`}>Refund Application</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Status</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValWarning}`}>Ready to transfer to human agent</span>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Progress</h3>
-                  <div className={styles.decisionTimeline}>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Order identified</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Rebooking options reviewed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund policy checked</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund amount confirmed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <span className={styles.pulseWrap}>
-                        <span className={styles.pulseDot} />
-                      </span>
-                      <span>⏳ Transferring to human agent</span>
-                    </div>
-                  </div>
-                </section>
-
-                <p className={styles.sheetNote}>
-                  Key information from this session is being recorded to ensure seamless service continuity.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
-
-        {orderSheetOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setOrderSheetOpen(false)} />
-            <div
-              className={`${styles.sheetPanel} ${styles.orderSheetPanel}`}
-              role="dialog"
-              aria-labelledby="p4-order-sheet-title"
-            >
-              <div className={styles.sheetHeader}>
-                <h2 id="p4-order-sheet-title" className={styles.sheetTitle}>
-                  Select Order
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setOrderSheetOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={`${styles.sheetBody} ${styles.sheetBodyFlush}`}>
-                <div className={styles.orderList} role="listbox" aria-label="Orders">
-                  {MOCK_ORDERS.map((order) => {
-                    const selected = pendingOrderId === order.id;
-                    return (
-                      <button
-                        key={order.id}
-                        type="button"
-                        role="option"
-                        aria-selected={selected}
-                        className={`${styles.orderRow} ${selected ? styles.orderRowSelected : ""}`}
-                        onClick={() => setPendingOrderId(order.id)}
-                      >
-                        {selected ? <RowSelectedCheckIcon /> : <span className={styles.orderRowCheckSpacer} aria-hidden />}
-                        <span className={styles.orderRowText}>{order.sheetLabel}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className={styles.orderSheetFooter}>
-                <button type="button" className={styles.orderConfirmBtn} onClick={confirmOrderSelection}>
-                  Confirm Selection
-                </button>
-              </div>
-            </div>
-          </>
-        )}
 
         <footer className={appStyles.bottomSection}>
           <div className={appStyles.inputBar}>
@@ -516,7 +303,7 @@ export function Page4Confirmation() {
               className={appStyles.inputField}
               placeholder="Type your question here..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.targetValue)}
+              onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={onInputKeyDown}
             />
             <button type="button" className={appStyles.sendButton} aria-label="Send message" onClick={handleSubmit} disabled={!canSend}>

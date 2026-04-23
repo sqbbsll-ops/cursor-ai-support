@@ -3,24 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page5.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
-import { MOCK_FLIGHT_BOOKING_ORDER, QUICK_CHIPS } from "../chatConstants.js";
-
-const SYNC_ROWS = [
-  { key: "Order No.", value: "C12345678" },
-  { key: "Route", value: "Shanghai → Beijing" },
-  { key: "Your Request", value: "Refund Application", highlight: true },
-  { key: "Steps Done", value: "3 steps completed" }
-];
-
-function RowCheckIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="8" cy="8" r="8" fill="#52C41A" />
-      <path d="M4.5 8l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+import {
+  DEFAULT_REQUEST_SUMMARY_TEXT,
+  MOCK_FLIGHT_BOOKING_ORDER
+} from "../chatConstants.js";
 
 function CardHeaderCheck() {
   return (
@@ -31,29 +17,18 @@ function CardHeaderCheck() {
   );
 }
 
-function StepDoneIcon() {
-  return (
-    <span className={styles.stepMarkDone} aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="9" fill="#52C41A" />
-        <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
 export function Page5Waiting() {
   const navigate = useNavigate();
   const location = useLocation();
   const incomingState = location.state || {};
   const incomingStateRef = useRef(incomingState);
   incomingStateRef.current = location.state || {};
+  const userSummary = incomingState.userSummary || DEFAULT_REQUEST_SUMMARY_TEXT;
 
   const [phase, setPhase] = useState(1);
-  const [visibleSyncRows, setVisibleSyncRows] = useState(0);
+  const [paragraphVisible, setParagraphVisible] = useState(false);
   const [progressActive, setProgressActive] = useState(false);
   const [showConnectingLine, setShowConnectingLine] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
@@ -62,30 +37,6 @@ export function Page5Waiting() {
   const agentNoteRef = useRef(null);
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (summaryOpen) {
-      frame.style.overflow = "hidden";
-    } else {
-      frame.style.overflow = "";
-    }
-    return () => {
-      frame.style.overflow = "";
-    };
-  }, [summaryOpen]);
-
-  useEffect(() => {
-    if (summaryOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [summaryOpen]);
 
   const navSubtitle = useMemo(() => {
     if (showConnectingLine) return "Connecting you now...";
@@ -101,11 +52,9 @@ export function Page5Waiting() {
 
   useEffect(() => {
     if (phase !== 2) return;
-    setVisibleSyncRows(0);
-    const timeouts = [0, 200, 400, 600].map((ms, i) =>
-      setTimeout(() => setVisibleSyncRows(i + 1), ms)
-    );
-    return () => timeouts.forEach(clearTimeout);
+    setParagraphVisible(false);
+    const t = setTimeout(() => setParagraphVisible(true), 250);
+    return () => clearTimeout(t);
   }, [phase]);
 
   useEffect(() => {
@@ -127,6 +76,7 @@ export function Page5Waiting() {
       navigate("/page6", {
         state: {
           ...(incomingStateRef.current || {}),
+          userSummary,
           agentNote: agentNoteRef.current,
           page5CompletedAt: Date.now()
         }
@@ -136,7 +86,7 @@ export function Page5Waiting() {
       clearTimeout(tConnect);
       clearTimeout(tNav);
     };
-  }, [navigate]);
+  }, [navigate, userSummary]);
 
   const handleSendNote = () => {
     const t = noteDraft.trim().slice(0, 200);
@@ -160,6 +110,7 @@ export function Page5Waiting() {
     navigate("/page6", {
       state: {
         ...incomingState,
+        userSummary,
         message: text,
         agentNote: agentNoteRef.current,
         page5CompletedAt: Date.now()
@@ -175,14 +126,12 @@ export function Page5Waiting() {
     }
   };
 
-  const sheetStatus = phase >= 2 ? "Sync complete" : "Syncing to human agent...";
-
   return (
     <main className={appStyles.appShell}>
       <section ref={frameRef} className={appStyles.mobileFrame}>
         <TopNav variant="chat" subtitle={navSubtitle} onBack={() => navigate(-1)} />
 
-        <div className={styles.mainScroll} style={{ overflow: summaryOpen ? "hidden" : "auto" }}>
+        <div className={styles.mainScroll}>
           <div className={styles.hero}>
             <div className={styles.heroIconWrap}>
               {phase === 1 ? (
@@ -209,25 +158,27 @@ export function Page5Waiting() {
           {phase >= 2 && (
             <div className={styles.syncCard}>
               <div className={styles.syncCardHeader}>
-                <h3 className={styles.syncCardTitle}>Synced Information</h3>
+                <h3 className={styles.syncCardTitle}>Your summary has been shared with the agent:</h3>
                 <CardHeaderCheck />
               </div>
-              {SYNC_ROWS.map((row, i) => (
-                <div
-                  key={row.key}
-                  className={`${styles.syncRow} ${i < visibleSyncRows ? styles.syncRowVisible : ""}`}
-                >
-                  <span className={styles.syncKey}>{row.key}</span>
-                  <div className={styles.syncValWrap}>
-                    <span className={`${styles.syncVal} ${row.highlight ? styles.syncValBlue : ""}`}>{row.value}</span>
-                    <span className={styles.syncRowCheck}>
-                      <RowCheckIcon />
-                    </span>
-                  </div>
-                </div>
-              ))}
+              <p
+                style={{
+                  margin: "12px 0 0",
+                  padding: "12px",
+                  background: "#FAFAFA",
+                  borderRadius: "8px",
+                  fontSize: "15px",
+                  lineHeight: 1.6,
+                  color: "#1f1f1f",
+                  whiteSpace: "pre-wrap",
+                  opacity: paragraphVisible ? 1 : 0,
+                  transition: "opacity 0.4s ease"
+                }}
+              >
+                {userSummary}
+              </p>
               <p className={styles.syncCardFooter}>
-                The human agent has received your information. You will not need to repeat yourself.
+                The human agent has received your summary. You will not need to repeat yourself.
               </p>
             </div>
           )}
@@ -313,66 +264,6 @@ export function Page5Waiting() {
             </>
           )}
         </div>
-
-        <FloatingSummaryWidget frameRef={frameRef} onOpenPanel={() => setSummaryOpen(true)} />
-
-        {summaryOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setSummaryOpen(false)} />
-            <div className={styles.sheetPanel} role="dialog" aria-labelledby="p5-summary-title">
-              <div className={styles.sheetHeader}>
-                <h2 id="p5-summary-title" className={styles.sheetTitle}>
-                  Service Summary
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setSummaryOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={styles.sheetBody}>
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Status</h3>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Sync</span>
-                    <span className={phase >= 2 ? `${styles.sheetVal} ${styles.sheetValGreen}` : `${styles.sheetVal} ${styles.sheetValWarning}`}>
-                      {sheetStatus}
-                    </span>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Progress</h3>
-                  <div className={styles.decisionTimeline}>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Order identified</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Rebooking options reviewed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund policy checked</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund amount confirmed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <span className={styles.pulseWrap}>
-                        <span className={styles.pulseDot} />
-                      </span>
-                      <span>Human agent connected</span>
-                    </div>
-                  </div>
-                </section>
-
-                <p className={styles.sheetNote}>Your session is being handed off to a human agent.</p>
-              </div>
-            </div>
-          </>
-        )}
 
         <footer className={appStyles.bottomSection}>
           <div className={appStyles.inputBar}>

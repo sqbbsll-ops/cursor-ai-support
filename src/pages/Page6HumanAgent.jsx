@@ -3,11 +3,9 @@ import { useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page6.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
-import { QUICK_CHIPS } from "../chatConstants.js";
 
 const MSG_HUMAN_1 =
-  "Hello! I can see you've been looking at refund options for your Shanghai to Beijing flight on April 28. You also checked rebooking options before deciding on a refund — is that correct?";
+  "Hello! I've reviewed your summary: you were looking to cancel your Shanghai-Beijing flight and confirmed a refund of CNY 680. I also see you mentioned you were in a rush — I'll make sure we get this sorted quickly for you. Shall we proceed?";
 
 const MSG_HUMAN_3 = `Perfect. I have your order details here. Let me confirm the refund amount for you.
 
@@ -101,36 +99,6 @@ function HumanMessageBlock({ children, footer = null }) {
   );
 }
 
-function StepDoneIcon() {
-  return (
-    <span className={styles.stepMarkDone} aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="9" fill="#52C41A" />
-        <path d="M5 9l2.5 2.5L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
-}
-
-function HandlerPersonIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path
-        d="M12 12a3 3 0 100-6 3 3 0 000 6z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M6 20c1-3 3-4.5 6-4.5s5 1.5 6 4.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 export function Page6HumanAgent() {
   const navigate = useNavigate();
 
@@ -147,36 +115,11 @@ export function Page6HumanAgent() {
   const [showFinalSystem, setShowFinalSystem] = useState(false);
   const [extraUserLines, setExtraUserLines] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const frameRef = useRef(null);
   const bottomRef = useRef(null);
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (summaryOpen) {
-      frame.style.overflow = "hidden";
-    } else {
-      frame.style.overflow = "";
-    }
-    return () => {
-      frame.style.overflow = "";
-    };
-  }, [summaryOpen]);
-
-  useEffect(() => {
-    if (summaryOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [summaryOpen]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -275,7 +218,6 @@ export function Page6HumanAgent() {
 
         <div
           className={styles.chatScroll}
-          style={{ overflow: summaryOpen ? "hidden" : "auto" }}
           role="log"
           aria-live="polite"
           aria-label="Conversation"
@@ -364,96 +306,6 @@ export function Page6HumanAgent() {
             <div ref={bottomRef} />
           </div>
         </div>
-
-        <FloatingSummaryWidget frameRef={frameRef} onOpenPanel={() => setSummaryOpen(true)} />
-
-        {summaryOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setSummaryOpen(false)} />
-            <div className={styles.sheetPanel} role="dialog" aria-labelledby="p6-summary-title">
-              <div className={styles.sheetHeader}>
-                <h2 id="p6-summary-title" className={styles.sheetTitle}>
-                  Service Summary
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setSummaryOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={styles.sheetBody}>
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Current Status</h3>
-                  <div className={styles.handlerRow}>
-                    <span className={styles.handlerIcon}>
-                      <HandlerPersonIcon />
-                    </span>
-                    <span>Human Agent</span>
-                  </div>
-                  <div className={styles.sheetRow} style={{ marginTop: 12 }}>
-                    <span className={styles.sheetKey}>Status</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValBlue}`}>Refund in progress</span>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Synced from AI</h3>
-                  <ul className={styles.syncedList}>
-                    <li>Order identified by AI</li>
-                    <li>User request recorded: Refund</li>
-                    <li>Decision history preserved</li>
-                  </ul>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Progress</h3>
-                  <div className={styles.decisionTimeline}>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Request received</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Order identified</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Rebooking options reviewed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Switched to refund</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Refund policy confirmed</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <StepDoneIcon />
-                      <span>Transferred to human agent</span>
-                    </div>
-                    <div className={styles.decisionRow}>
-                      <span className={styles.pulseWrap}>
-                        <span className={styles.pulseDot} />
-                      </span>
-                      <span>⏳ Processing refund</span>
-                    </div>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Tags</h3>
-                  <div className={styles.tagRow}>
-                    <span className={`${styles.tagPill} ${styles.tagGreen}`}>Synced</span>
-                    <span className={`${styles.tagPill} ${styles.tagBlue}`}>Agent Connected</span>
-                    <span className={`${styles.tagPill} ${styles.tagOrange}`}>In Progress</span>
-                  </div>
-                </section>
-
-                <p className={styles.sheetNote}>The human agent has full context from your AI session.</p>
-              </div>
-            </div>
-          </>
-        )}
 
         <footer className={appStyles.bottomSection}>
           <div className={appStyles.inputBar}>

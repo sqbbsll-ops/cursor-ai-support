@@ -3,8 +3,6 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page2.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { FloatingSummaryWidget } from "../components/FloatingSummaryWidget.jsx";
-import { SessionHistoryList } from "../components/SessionHistoryList.jsx";
 import {
   buildFlightBookingMessageHistory,
   detectIntent,
@@ -15,8 +13,7 @@ import {
   MOCK_ORDER_INFO,
   PAGE2_FLIGHT_LOOKUP_AI_TEXT,
   HUMAN_AGENT_PROMPT_TEXT,
-  HUMAN_AGENT_CONTINUE_AI_TEXT,
-  QUICK_CHIPS
+  HUMAN_AGENT_CONTINUE_AI_TEXT
 } from "../chatConstants.js";
 
 /** Left-align choice chips under AI bubbles (overrides nested layout/CSS modules). */
@@ -234,7 +231,6 @@ export function Page2Understanding() {
   const [showMsg2, setShowMsg2] = useState(false);
   const [showTyping3, setShowTyping3] = useState(false);
   const [showMsg3, setShowMsg3] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [humanSegments, setHumanSegments] = useState(() =>
     intent === "human_agent" ? [{ key: "route", kind: "route", step: "loading" }] : []
@@ -244,30 +240,6 @@ export function Page2Understanding() {
   const frameRef = useRef(null);
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
-
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (summaryOpen) {
-      frame.style.overflow = "hidden";
-    } else {
-      frame.style.overflow = "";
-    }
-    return () => {
-      frame.style.overflow = "";
-    };
-  }, [summaryOpen]);
-
-  useEffect(() => {
-    if (summaryOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [summaryOpen]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -430,74 +402,6 @@ export function Page2Understanding() {
     }
   };
 
-  const summaryServiceType =
-    intent === "hotel_cancellation"
-      ? "Hotel Booking"
-      : isFlightBookingIntent(intent) || intent === "order_inquiry"
-        ? "Flight Booking"
-        : "General";
-
-  const summaryDetected =
-    intent === "hotel_cancellation"
-      ? "Cancellation"
-      : isFlightBookingIntent(intent)
-        ? "Refund / Rebooking"
-        : intent === "order_inquiry"
-          ? "Order details"
-          : intent === "human_agent"
-            ? "Human support"
-            : "How can we help?";
-
-  const summaryOrderRows =
-    intent === "hotel_cancellation" ? (
-      <>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Order No.</span>
-          <span className={styles.sheetVal}>{MOCK_HOTEL_ORDER.orderId}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Hotel</span>
-          <span className={styles.sheetVal}>{MOCK_HOTEL_ORDER.hotel}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Stay</span>
-          <span className={styles.sheetVal}>
-            {MOCK_HOTEL_ORDER.checkIn} – {MOCK_HOTEL_ORDER.checkOut}
-          </span>
-        </div>
-      </>
-    ) : intent === "order_inquiry" ? (
-      <>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Order No.</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INQUIRY_INFO.orderId}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Route</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INQUIRY_INFO.route}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Status</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INQUIRY_INFO.status}</span>
-        </div>
-      </>
-    ) : (
-      <>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Order No.</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INFO.orderId}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Route</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INFO.route}</span>
-        </div>
-        <div className={styles.sheetRow}>
-          <span className={styles.sheetKey}>Departure</span>
-          <span className={styles.sheetVal}>{MOCK_ORDER_INFO.departure}</span>
-        </div>
-      </>
-    );
-
   return (
     <main className={appStyles.appShell}>
       <section ref={frameRef} className={appStyles.mobileFrame}>
@@ -505,7 +409,6 @@ export function Page2Understanding() {
 
         <div
           className={styles.chatScroll}
-          style={{ overflow: summaryOpen ? "hidden" : "auto" }}
           role="log"
           aria-live="polite"
           aria-label="Conversation"
@@ -544,88 +447,6 @@ export function Page2Understanding() {
             <div ref={bottomRef} />
           </div>
         </div>
-
-        <FloatingSummaryWidget frameRef={frameRef} onOpenPanel={() => setSummaryOpen(true)} />
-
-        {summaryOpen && (
-          <>
-            <button type="button" className={styles.sheetOverlay} aria-label="Close overlay" onClick={() => setSummaryOpen(false)} />
-            <div className={styles.sheetPanel} role="dialog" aria-labelledby="summary-sheet-title">
-              <div className={styles.sheetHeader}>
-                <h2 id="summary-sheet-title" className={styles.sheetTitle}>
-                  Service Summary
-                </h2>
-                <button type="button" className={styles.sheetClose} aria-label="Close" onClick={() => setSummaryOpen(false)}>
-                  ✕
-                </button>
-              </div>
-              <div className={styles.sheetDivider} />
-              <div className={styles.sheetBody}>
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Current Request</h3>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Service Type</span>
-                    <span className={styles.sheetVal}>{summaryServiceType}</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Detected Need</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValHighlight}`}>{summaryDetected}</span>
-                  </div>
-                  <div className={styles.sheetRow}>
-                    <span className={styles.sheetKey}>Status</span>
-                    <span className={`${styles.sheetVal} ${styles.sheetValWarning}`}>Awaiting your confirmation</span>
-                  </div>
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Order Identified</h3>
-                  {summaryOrderRows}
-                </section>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Progress</h3>
-                  <div className={styles.stepper}>
-                    <div className={styles.stepRow}>
-                      <span className={styles.stepIcon} aria-hidden="true">
-                        ✅
-                      </span>
-                      <span>Request received</span>
-                    </div>
-                    <div className={styles.stepRow}>
-                      <span className={styles.stepIcon} aria-hidden="true">
-                        ✅
-                      </span>
-                      <span>Order identified</span>
-                    </div>
-                    <div className={styles.stepRow}>
-                      <span className={styles.pulseWrap} aria-hidden="true">
-                        <span className={styles.pulseDot} />
-                      </span>
-                      <span>⏳ Confirming service direction</span>
-                    </div>
-                  </div>
-                </section>
-
-                <p className={styles.sheetNote}>
-                  Key information from this session is being recorded to ensure seamless service continuity.
-                </p>
-
-                <section className={styles.sheetSection}>
-                  <h3 className={styles.sheetSectionTitle}>Session History</h3>
-                  <SessionHistoryList
-                    rows={[
-                      { time: "Just now", text: "Refund request submitted" },
-                      { time: "2 min ago", text: "Confirmed refund over rebooking" },
-                      { time: "3 min ago", text: "Checked rebooking options (CNY 120 fee)" },
-                      { time: "4 min ago", text: "Flight order C12345678 identified" },
-                      { time: "5 min ago", text: "Started session" }
-                    ]}
-                  />
-                </section>
-              </div>
-            </div>
-          </>
-        )}
 
         <footer className={appStyles.bottomSection}>
           <div className={appStyles.inputBar}>
