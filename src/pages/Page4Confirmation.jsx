@@ -36,7 +36,11 @@ export function Page4Confirmation() {
   const [hasEdited, setHasEdited] = useState(Boolean(incomingState.userSummary));
   const [isEditing, setIsEditing] = useState(false);
   const [draftText, setDraftText] = useState(summaryText);
+  const [contentHeight, setContentHeight] = useState(null);
+  const [cardHeight, setCardHeight] = useState(null);
   const textareaRef = useRef(null);
+  const contentRef = useRef(null);
+  const cardRef = useRef(null);
   const scrollEndRef = useRef(null);
 
   const SUMMARY_ROWS = [
@@ -59,7 +63,17 @@ export function Page4Confirmation() {
   };
 
   const handleEditClick = () => {
-    setDraftText(summaryText);
+    if (contentRef.current) {
+      const h = contentRef.current.getBoundingClientRect().height;
+      setContentHeight(Math.ceil(h));
+    }
+    if (cardRef.current) {
+      const ch = cardRef.current.getBoundingClientRect().height;
+      setCardHeight(Math.ceil(ch));
+    }
+    setDraftText(
+      SUMMARY_ROWS.map(row => `${row.label} ${row.value}`).join('\n')
+    );
     setIsEditing(true);
   };
 
@@ -145,7 +159,9 @@ export function Page4Confirmation() {
               <AiAvatarSmall />
               <div className={styles.aiCol}>
                 <div
+                  ref={cardRef}
                   className={`${styles.confirmCard} ${confirmed ? styles.confirmCardConfirmed : ""}`}
+                  style={isEditing && cardHeight ? { minHeight: `${cardHeight}px` } : undefined}
                 >
                   <div
                     style={{
@@ -192,23 +208,25 @@ export function Page4Confirmation() {
                       onChange={(e) => setDraftText(e.target.value)}
                       style={{
                         width: "100%",
-                        minHeight: "140px",
-                        height: "auto",
+                        height: contentHeight ? `${contentHeight}px` : "140px",
+                        minHeight: contentHeight ? `${contentHeight}px` : "140px",
                         border: "1.5px solid #1677FF",
                         borderRadius: "8px",
                         padding: "12px",
-                        fontSize: "15px",
-                        lineHeight: 1.6,
+                        fontSize: "14px",
+                        lineHeight: "1.5",
                         color: "#1f1f1f",
                         fontFamily: "inherit",
                         resize: "none",
                         boxSizing: "border-box",
                         outline: "none",
-                        display: "block"
+                        display: "block",
+                        overflow: "hidden"
                       }}
                     />
                   ) : hasEdited ? (
                     <p
+                      ref={contentRef}
                       style={{
                         margin: 0,
                         padding: "12px",
@@ -222,6 +240,7 @@ export function Page4Confirmation() {
                     </p>
                   ) : (
                     <div
+                      ref={contentRef}
                       style={{
                         display: "flex",
                         flexDirection: "column",
