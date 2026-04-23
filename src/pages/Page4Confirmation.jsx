@@ -22,15 +22,8 @@ function AiAvatarSmall() {
   );
 }
 
-const SUMMARY_FIELDS = [
-  { id: "flight", label: "Flight:" },
-  { id: "order", label: "Order:" },
-  { id: "request", label: "Request:" },
-  { id: "refund", label: "Refund:" }
-];
-
 const DEFAULT_EDIT_VALUES = {
-  flight: "Shanghai → Beijing, April 28 at 14:00",
+  flight: "Shanghai (PVG) → Beijing (PEK), April 28 at 14:00",
   order: "C12345678",
   request:
     "You initially explored rebooking options but decided a refund works better for you.",
@@ -38,7 +31,12 @@ const DEFAULT_EDIT_VALUES = {
 };
 
 function buildSummaryText(values) {
-  return SUMMARY_FIELDS.map((f) => `${f.label} ${values[f.id]}`).join("\n");
+  return [
+    `Flight: ${values.flight}`,
+    `Order: ${values.order}`,
+    `Request: ${values.request}`,
+    `Refund: ${values.refund}`
+  ].join("\n");
 }
 
 export function Page4Confirmation() {
@@ -184,53 +182,142 @@ export function Page4Confirmation() {
                       display: "flex",
                       flexDirection: "column",
                       gap: "10px",
-                      padding: "12px"
+                      padding: "12px",
+                      minHeight: "140px"
                     }}
                   >
-                    {SUMMARY_FIELDS.map((field) => (
-                      <div
-                        key={field.id}
-                        style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
-                      >
-                        <span
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
+                        Flight:
+                      </span>
+                      {isEditing ? (
+                        <select
+                          value={editValues.flight}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, flight: e.target.value }))
+                          }
                           style={{
-                            fontWeight: 600,
+                            flex: 1,
+                            border: "none",
+                            borderBottom: "1.5px solid #1677FF",
+                            background: "transparent",
                             fontSize: "14px",
-                            color: "#1f1f1f",
-                            minWidth: "80px",
-                            lineHeight: 1.5,
-                            paddingTop: isEditing ? "2px" : 0
+                            color: "#595959",
+                            outline: "none",
+                            cursor: "pointer",
+                            padding: "2px 0"
                           }}
                         >
-                          {field.label}
+                          <option value="Shanghai (PVG) → Beijing (PEK), April 28 at 14:00">
+                            Shanghai (PVG) → Beijing (PEK), April 28 at 14:00
+                          </option>
+                          <option value="Beijing (PEK) → Shanghai (PVG), May 3 at 09:00">
+                            Beijing (PEK) → Shanghai (PVG), May 3 at 09:00
+                          </option>
+                          <option value="Shanghai (PVG) → Chengdu (CTU), April 30 at 16:30">
+                            Shanghai (PVG) → Chengdu (CTU), April 30 at 16:30
+                          </option>
+                        </select>
+                      ) : (
+                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
+                          {editValues.flight}
                         </span>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={editValues[field.id]}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            style={{
-                              flex: 1,
-                              minWidth: 0,
-                              border: "none",
-                              borderBottom: "1.5px solid #1677FF",
-                              background: "transparent",
-                              fontSize: "14px",
-                              color: "#595959",
-                              lineHeight: 1.5,
-                              width: "100%",
-                              outline: "none",
-                              padding: "2px 0",
-                              fontFamily: "inherit"
-                            }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                            {editValues[field.id]}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
+                        Order:
+                      </span>
+                      {isEditing ? (
+                        <select
+                          value={editValues.order}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, order: e.target.value }))
+                          }
+                          style={{
+                            flex: 1,
+                            border: "none",
+                            borderBottom: "1.5px solid #1677FF",
+                            background: "transparent",
+                            fontSize: "14px",
+                            color: "#595959",
+                            outline: "none",
+                            cursor: "pointer",
+                            padding: "2px 0"
+                          }}
+                        >
+                          <option value="C12345678">C12345678</option>
+                          <option value="C87654321">C87654321</option>
+                          <option value="H98765432">H98765432</option>
+                        </select>
+                      ) : (
+                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
+                          {editValues.order}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
+                        Request:
+                      </span>
+                      {isEditing ? (
+                        <textarea
+                          value={editValues.request}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, request: e.target.value }))
+                          }
+                          rows={2}
+                          style={{
+                            flex: 1,
+                            border: "none",
+                            borderBottom: "1.5px solid #1677FF",
+                            background: "transparent",
+                            fontSize: "14px",
+                            color: "#595959",
+                            outline: "none",
+                            resize: "none",
+                            lineHeight: "1.5",
+                            fontFamily: "inherit",
+                            padding: "2px 0"
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
+                          {editValues.request}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <span style={{ fontWeight: 600, fontSize: "14px", color: "#1f1f1f", minWidth: "80px" }}>
+                        Refund:
+                      </span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editValues.refund}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({ ...prev, refund: e.target.value }))
+                          }
+                          style={{
+                            flex: 1,
+                            border: "none",
+                            borderBottom: "1.5px solid #1677FF",
+                            background: "transparent",
+                            fontSize: "14px",
+                            color: "#595959",
+                            outline: "none",
+                            padding: "2px 0"
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
+                          {editValues.refund}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <p
