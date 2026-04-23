@@ -7,6 +7,8 @@ import styles from "./AgentChat.module.css";
 /** @typedef {{ text: string, tag: string }} UnprocessedCard */
 /** @typedef {{ status: 'done' | 'warning' | 'pending', text: string }} StepItem */
 /** @typedef {{ key: string, value: string }} OrderLine */
+/** @typedef {{ label: string, color: 'green' | 'orange' | 'red' | 'blue' | 'gray' }} SignalBadge */
+/** @typedef {{ emotion: SignalBadge, attitude: SignalBadge, intent: SignalBadge }} SessionSignals */
 
 /**
  * @typedef {{
@@ -22,6 +24,8 @@ import styles from "./AgentChat.module.css";
  *   quickChips: string[];
  *   requestHeadline: string;
  *   requestSubtext: string;
+ *   quotes: string[];
+ *   signals: SessionSignals;
  *   unprocessedCards: UnprocessedCard[];
  *   steps: StepItem[];
  *   primaryActionLabel?: string;
@@ -60,6 +64,16 @@ const CHAT_SESSIONS = {
     quickChips: ["Refund confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Refund Application",
     requestSubtext: "Checked rebooking first → confirmed refund",
+    quotes: [
+      "I'm in a bit of a rush, I need this done today.",
+      "I tried calling yesterday but no one picked up.",
+      "Actually just refund please."
+    ],
+    signals: {
+      emotion: { label: "Anxious", color: "orange" },
+      attitude: { label: "Cooperative", color: "green" },
+      intent: { label: "Wants fast resolution", color: "orange" }
+    },
     unprocessedCards: [
       { text: "I'm in a rush, need this done today", tag: "Urgency" },
       { text: "I tried calling yesterday", tag: "Prior contact" }
@@ -100,6 +114,16 @@ const CHAT_SESSIONS = {
     quickChips: ["Cancel confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Room Upgrade Inquiry",
     requestSubtext: "User wants to upgrade to suite — AI unable to process",
+    quotes: [
+      "I want to upgrade to a suite, not cancel.",
+      "I want to know if I can upgrade and how much it costs.",
+      "Can anyone help me with this?"
+    ],
+    signals: {
+      emotion: { label: "Frustrated", color: "red" },
+      attitude: { label: "AI could not help", color: "red" },
+      intent: { label: "Seeking upgrade options", color: "blue" }
+    },
     unprocessedCards: [
       { text: "I want to upgrade to a suite", tag: "Upgrade request" },
       { text: "I want to know if I can upgrade and how much it costs", tag: "Pricing inquiry" },
@@ -131,6 +155,15 @@ const CHAT_SESSIONS = {
     quickChips: ["Status shared", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Order Status Check",
     requestSubtext: "Customer needed status clarity after a long wait",
+    quotes: [
+      "I've been waiting for 3 days already.",
+      "OK thanks."
+    ],
+    signals: {
+      emotion: { label: "Impatient", color: "orange" },
+      attitude: { label: "Neutral", color: "gray" },
+      intent: { label: "Needs reassurance", color: "blue" }
+    },
     unprocessedCards: [{ text: "I've been waiting for 3 days already", tag: "Waiting frustration" }],
     steps: [
       { status: "done", text: "Order identified" },
@@ -319,9 +352,50 @@ export function AgentChat() {
               {isSummaryExpanded && (
                 <div className={styles.summaryCardBody}>
                   <section className={styles.summarySection}>
-                    <div className={styles.summarySectionLabel}>Customer Request</div>
+                    <div className={styles.summarySectionLabel}>What They Need</div>
                     <div className={styles.requestHeadline}>{session.requestHeadline}</div>
                     <div className={styles.requestSubtext}>{session.requestSubtext}</div>
+                  </section>
+
+                  <section className={`${styles.summarySection} ${styles.quotesSection}`}>
+                    <div className={styles.summarySectionLabel}>User's Own Words</div>
+                    <div className={styles.quotesList}>
+                      {session.quotes.map((quote) => (
+                        <div key={quote} className={styles.quoteCard}>
+                          “{quote}”
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className={styles.summarySection}>
+                    <div className={styles.summarySectionLabel}>Emotion &amp; Intent Signals</div>
+                    <div className={styles.signalsGrid}>
+                      <div className={styles.signalRow}>
+                        <span className={styles.signalLabel}>Emotion</span>
+                        <span
+                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.emotion.color}`]}`}
+                        >
+                          {session.signals.emotion.label}
+                        </span>
+                      </div>
+                      <div className={styles.signalRow}>
+                        <span className={styles.signalLabel}>Attitude toward AI</span>
+                        <span
+                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.attitude.color}`]}`}
+                        >
+                          {session.signals.attitude.label}
+                        </span>
+                      </div>
+                      <div className={styles.signalRow}>
+                        <span className={styles.signalLabel}>Hidden Intent</span>
+                        <span
+                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.intent.color}`]}`}
+                        >
+                          {session.signals.intent.label}
+                        </span>
+                      </div>
+                    </div>
                   </section>
 
                   <section className={`${styles.summarySection} ${styles.attentionSection}`}>
@@ -377,6 +451,14 @@ export function AgentChat() {
                       </button>
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    className={styles.viewHistoryBtn}
+                    onClick={() => setIsHistoryOpen(true)}
+                  >
+                    View Full Conversation →
+                  </button>
                 </div>
               )}
             </div>
@@ -418,8 +500,11 @@ export function AgentChat() {
             </div>
           </section>
 
-          <aside className={`${styles.historyPanel} ${isHistoryOpen ? styles.historyPanelOpen : styles.historyPanelClosed}`}>
-            {isHistoryOpen ? (
+          <aside
+            className={`${styles.historyPanel} ${isHistoryOpen ? styles.historyPanelOpen : styles.historyPanelClosed}`}
+            aria-hidden={!isHistoryOpen}
+          >
+            {isHistoryOpen && (
               <>
                 <div className={styles.historyHeader}>
                   <div>
@@ -435,10 +520,6 @@ export function AgentChat() {
                   <div className={styles.historyTransferDivider}>— Transferred to human agent —</div>
                 </div>
               </>
-            ) : (
-              <button type="button" className={styles.historyCollapsedTab} onClick={() => setIsHistoryOpen(true)}>
-                Chat History
-              </button>
             )}
           </aside>
         </div>
