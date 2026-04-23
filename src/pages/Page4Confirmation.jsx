@@ -72,7 +72,7 @@ export function Page4Confirmation() {
       setCardHeight(Math.ceil(ch));
     }
     setDraftText(
-      SUMMARY_ROWS.map(row => `${row.label} ${row.value}`).join('\n')
+      SUMMARY_ROWS.map(row => `${row.label} ${row.value}`).join('\n\n')
     );
     setIsEditing(true);
   };
@@ -214,7 +214,7 @@ export function Page4Confirmation() {
                         borderRadius: "8px",
                         padding: "12px",
                         fontSize: "14px",
-                        lineHeight: "1.5",
+                        lineHeight: "1.6",
                         color: "#1f1f1f",
                         fontFamily: "inherit",
                         resize: "none",
