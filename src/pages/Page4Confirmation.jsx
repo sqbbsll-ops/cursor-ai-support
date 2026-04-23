@@ -295,7 +295,7 @@ export function Page4Confirmation() {
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, request: e.target.value }))
                           }
-                          rows={2}
+                          rows={4}
                           style={{
                             ...EDIT_FIELD_STYLE,
                             lineHeight: "1.5",
@@ -315,13 +315,17 @@ export function Page4Confirmation() {
                     {isEditing ? (
                       <div style={EDIT_ROW_STYLE}>
                         <span style={LABEL_STYLE}>Refund:</span>
-                        <input
-                          type="text"
+                        <textarea
                           value={editValues.refund}
                           onChange={(e) =>
                             setEditValues((prev) => ({ ...prev, refund: e.target.value }))
                           }
-                          style={EDIT_FIELD_STYLE}
+                          rows={3}
+                          style={{
+                            ...EDIT_FIELD_STYLE,
+                            lineHeight: "1.5",
+                            resize: "none"
+                          }}
                         />
                       </div>
                     ) : (
