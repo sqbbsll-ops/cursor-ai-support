@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import appStyles from "../App.module.css";
 import styles from "./Page4.module.css";
 import { TopNav } from "../components/TopNav.jsx";
-import { DEFAULT_REQUEST_SUMMARY_TEXT } from "../chatConstants.js";
 
 function AiAvatarSmall() {
   return (
@@ -23,6 +22,25 @@ function AiAvatarSmall() {
   );
 }
 
+const SUMMARY_FIELDS = [
+  { id: "flight", label: "Flight:" },
+  { id: "order", label: "Order:" },
+  { id: "request", label: "Request:" },
+  { id: "refund", label: "Refund:" }
+];
+
+const DEFAULT_EDIT_VALUES = {
+  flight: "Shanghai → Beijing, April 28 at 14:00",
+  order: "C12345678",
+  request:
+    "You initially explored rebooking options but decided a refund works better for you.",
+  refund: "CNY 680 after CNY 50 processing fee, timeline 3-5 business days."
+};
+
+function buildSummaryText(values) {
+  return SUMMARY_FIELDS.map((f) => `${f.label} ${values[f.id]}`).join("\n");
+}
+
 export function Page4Confirmation() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,32 +48,11 @@ export function Page4Confirmation() {
 
   const [confirmed, setConfirmed] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [summaryText, setSummaryText] = useState(
-    incomingState.userSummary || DEFAULT_REQUEST_SUMMARY_TEXT
-  );
-  const [hasEdited, setHasEdited] = useState(Boolean(incomingState.userSummary));
   const [isEditing, setIsEditing] = useState(false);
-  const [draftText, setDraftText] = useState(summaryText);
-  const [contentHeight, setContentHeight] = useState(null);
-  const [cardHeight, setCardHeight] = useState(null);
-  const textareaRef = useRef(null);
-  const contentRef = useRef(null);
-  const cardRef = useRef(null);
+  const [editValues, setEditValues] = useState(DEFAULT_EDIT_VALUES);
   const scrollEndRef = useRef(null);
 
-  const SUMMARY_ROWS = [
-    { label: "Flight:", value: "Shanghai → Beijing, April 28 at 14:00" },
-    { label: "Order:", value: "C12345678" },
-    {
-      label: "Request:",
-      value: "You initially explored rebooking options but decided a refund works better for you."
-    },
-    {
-      label: "Refund:",
-      value: "CNY 680 after CNY 50 processing fee, timeline 3-5 business days."
-    }
-  ];
-
+  const summaryText = useMemo(() => buildSummaryText(editValues), [editValues]);
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
   const goPage3 = () => {
@@ -63,33 +60,12 @@ export function Page4Confirmation() {
   };
 
   const handleEditClick = () => {
-    if (contentRef.current) {
-      const h = contentRef.current.getBoundingClientRect().height;
-      setContentHeight(Math.ceil(h) + 24);
-    }
-    if (cardRef.current) {
-      const ch = cardRef.current.getBoundingClientRect().height;
-      setCardHeight(Math.ceil(ch));
-    }
-    setDraftText(
-      SUMMARY_ROWS.map(row => `${row.label} ${row.value}`).join('\n\n')
-    );
     setIsEditing(true);
   };
 
   const handleDoneClick = () => {
-    const next = draftText.trim().length > 0 ? draftText : summaryText;
-    setSummaryText(next);
-    setHasEdited(true);
     setIsEditing(false);
   };
-
-  useEffect(() => {
-    if (isEditing) {
-      const t = requestAnimationFrame(() => textareaRef.current?.focus());
-      return () => cancelAnimationFrame(t);
-    }
-  }, [isEditing]);
 
   const handleConfirmTransfer = () => {
     setConfirmed(true);
@@ -129,6 +105,10 @@ export function Page4Confirmation() {
     }
   };
 
+  const updateField = (id, value) => {
+    setEditValues((prev) => ({ ...prev, [id]: value }));
+  };
+
   return (
     <main className={appStyles.appShell}>
       <section className={appStyles.mobileFrame}>
@@ -159,9 +139,7 @@ export function Page4Confirmation() {
               <AiAvatarSmall />
               <div className={styles.aiCol}>
                 <div
-                  ref={cardRef}
                   className={`${styles.confirmCard} ${confirmed ? styles.confirmCardConfirmed : ""}`}
-                  style={isEditing && cardHeight ? { minHeight: `${cardHeight}px` } : undefined}
                 >
                   <div
                     style={{
@@ -201,75 +179,59 @@ export function Page4Confirmation() {
                     )}
                   </div>
 
-                  {isEditing ? (
-                    <textarea
-                      ref={textareaRef}
-                      value={draftText}
-                      onChange={(e) => setDraftText(e.target.value)}
-                      style={{
-                        width: "100%",
-                        height: contentHeight ? `${contentHeight}px` : "140px",
-                        minHeight: contentHeight ? `${contentHeight}px` : "140px",
-                        border: "1.5px solid #1677FF",
-                        borderRadius: "8px",
-                        padding: "12px",
-                        fontSize: "14px",
-                        lineHeight: "1.6",
-                        color: "#1f1f1f",
-                        fontFamily: "inherit",
-                        resize: "none",
-                        boxSizing: "border-box",
-                        outline: "none",
-                        display: "block",
-                        overflow: "hidden"
-                      }}
-                    />
-                  ) : hasEdited ? (
-                    <p
-                      ref={contentRef}
-                      style={{
-                        margin: 0,
-                        padding: "12px",
-                        fontSize: "15px",
-                        lineHeight: 1.6,
-                        color: "#1f1f1f",
-                        whiteSpace: "pre-wrap"
-                      }}
-                    >
-                      {summaryText}
-                    </p>
-                  ) : (
-                    <div
-                      ref={contentRef}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "10px",
-                        padding: "12px"
-                      }}
-                    >
-                      {SUMMARY_ROWS.map((row) => (
-                        <div
-                          key={row.label}
-                          style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      padding: "12px"
+                    }}
+                  >
+                    {SUMMARY_FIELDS.map((field) => (
+                      <div
+                        key={field.id}
+                        style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "14px",
+                            color: "#1f1f1f",
+                            minWidth: "80px",
+                            lineHeight: 1.5,
+                            paddingTop: isEditing ? "2px" : 0
+                          }}
                         >
-                          <span
+                          {field.label}
+                        </span>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editValues[field.id]}
+                            onChange={(e) => updateField(field.id, e.target.value)}
                             style={{
-                              fontWeight: 600,
+                              flex: 1,
+                              minWidth: 0,
+                              border: "none",
+                              borderBottom: "1.5px solid #1677FF",
+                              background: "transparent",
                               fontSize: "14px",
-                              color: "#1f1f1f",
-                              minWidth: "80px"
+                              color: "#595959",
+                              lineHeight: 1.5,
+                              width: "100%",
+                              outline: "none",
+                              padding: "2px 0",
+                              fontFamily: "inherit"
                             }}
-                          >
-                            {row.label}
-                          </span>
+                          />
+                        ) : (
                           <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                            {row.value}
+                            {editValues[field.id]}
                           </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    ))}
+                  </div>
 
                   <p
                     style={{
