@@ -33,10 +33,24 @@ export function Page4Confirmation() {
   const [summaryText, setSummaryText] = useState(
     incomingState.userSummary || DEFAULT_REQUEST_SUMMARY_TEXT
   );
+  const [hasEdited, setHasEdited] = useState(Boolean(incomingState.userSummary));
   const [isEditing, setIsEditing] = useState(false);
   const [draftText, setDraftText] = useState(summaryText);
   const textareaRef = useRef(null);
   const scrollEndRef = useRef(null);
+
+  const SUMMARY_ROWS = [
+    { label: "Flight:", value: "Shanghai → Beijing, April 28 at 14:00" },
+    { label: "Order:", value: "C12345678" },
+    {
+      label: "Request:",
+      value: "You initially explored rebooking options but decided a refund works better for you."
+    },
+    {
+      label: "Refund:",
+      value: "CNY 680 after CNY 50 processing fee, timeline 3-5 business days."
+    }
+  ];
 
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
@@ -52,6 +66,7 @@ export function Page4Confirmation() {
   const handleDoneClick = () => {
     const next = draftText.trim().length > 0 ? draftText : summaryText;
     setSummaryText(next);
+    setHasEdited(true);
     setIsEditing(false);
   };
 
@@ -177,7 +192,8 @@ export function Page4Confirmation() {
                       onChange={(e) => setDraftText(e.target.value)}
                       style={{
                         width: "100%",
-                        minHeight: "120px",
+                        minHeight: "140px",
+                        height: "auto",
                         border: "1.5px solid #1677FF",
                         borderRadius: "8px",
                         padding: "12px",
@@ -185,12 +201,13 @@ export function Page4Confirmation() {
                         lineHeight: 1.6,
                         color: "#1f1f1f",
                         fontFamily: "inherit",
-                        resize: "vertical",
+                        resize: "none",
                         boxSizing: "border-box",
-                        outline: "none"
+                        outline: "none",
+                        display: "block"
                       }}
                     />
-                  ) : (
+                  ) : hasEdited ? (
                     <p
                       style={{
                         margin: 0,
@@ -198,13 +215,41 @@ export function Page4Confirmation() {
                         fontSize: "15px",
                         lineHeight: 1.6,
                         color: "#1f1f1f",
-                        background: "#FAFAFA",
-                        borderRadius: "8px",
                         whiteSpace: "pre-wrap"
                       }}
                     >
                       {summaryText}
                     </p>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
+                        padding: "12px"
+                      }}
+                    >
+                      {SUMMARY_ROWS.map((row) => (
+                        <div
+                          key={row.label}
+                          style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "14px",
+                              color: "#1f1f1f",
+                              minWidth: "80px"
+                            }}
+                          >
+                            {row.label}
+                          </span>
+                          <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
+                            {row.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   )}
 
                   <p

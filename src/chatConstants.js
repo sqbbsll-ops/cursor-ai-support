@@ -98,5 +98,7 @@ export const HUMAN_AGENT_PROMPT_TEXT =
 export const HUMAN_AGENT_CONTINUE_AI_TEXT =
   "No problem! I'm here to help. What else can I assist you with?";
 
-export const DEFAULT_REQUEST_SUMMARY_TEXT =
-  "You contacted us about cancelling your Shanghai to Beijing flight on April 28th. You initially explored rebooking options but decided a refund would work better for you. The refund amount would be CNY 680 after a CNY 50 processing fee, with a timeline of 3-5 business days.";
+export const DEFAULT_REQUEST_SUMMARY_TEXT = `Flight: Shanghai → Beijing, April 28 at 14:00
+Order: C12345678
+Request: You initially explored rebooking options but decided a refund works better for you.
+Refund: CNY 680 after CNY 50 processing fee, timeline 3-5 business days.`;
