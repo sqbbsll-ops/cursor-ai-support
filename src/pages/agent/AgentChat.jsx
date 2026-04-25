@@ -240,7 +240,7 @@ function RobotLogoIcon() {
 }
 
 function renderHistoryMessage(msg, activeHighlightId, setMessageRef) {
-  const rowClassName = `${msg.kind === "user" ? styles.historyMsgLeft : styles.historyMsgRight} ${
+  const rowClassName = `${msg.kind === "user" ? styles.historyMsgRight : styles.historyMsgLeft} ${
     activeHighlightId === msg.id ? styles.historyMessageHighlight : ""
   }`;
 
@@ -256,8 +256,10 @@ function renderHistoryMessage(msg, activeHighlightId, setMessageRef) {
   }
   return (
     <div key={msg.id} ref={(node) => setMessageRef(msg.id, node)} className={rowClassName}>
-      <div className={styles.aiLabel}>AI</div>
-      <div className={msg.kind === "aiCard" ? styles.historyAiCard : styles.historyAiBubble}>{msg.text}</div>
+      <div>
+        <div className={styles.aiLabel}>AI</div>
+        <div className={msg.kind === "aiCard" ? styles.historyAiCard : styles.historyAiBubble}>{msg.text}</div>
+      </div>
     </div>
   );
 }
@@ -419,90 +421,85 @@ export function AgentChat() {
           </div>
         </header>
 
+        <button
+          type="button"
+          className={styles.summaryToggleBar}
+          onClick={() => setIsSummaryExpanded((prev) => !prev)}
+        >
+          {isSummaryExpanded ? "▲ Hide Summary" : "▼ View AI Summary"}
+        </button>
+
         <div className={styles.mainLayout}>
-          <aside className={`${styles.summaryCard} ${!isSummaryExpanded ? styles.summaryCardCollapsed : ""}`}>
-              <div className={styles.summaryCardHeader}>
-                <div className={styles.summaryCardTitle}>
-                  {isSummaryExpanded ? `AI Summary — ${session.userName} · ${session.issue}` : `${session.userName} · AI Summary`}
-                </div>
-                <button
-                  type="button"
-                  className={styles.summaryCollapseBtn}
-                  onClick={() => setIsSummaryExpanded((prev) => !prev)}
-                >
-                  {isSummaryExpanded ? "▲ Collapse" : "▼ Expand"}
-                </button>
+          {isSummaryExpanded && (
+            <section className={styles.summaryCard} aria-label="AI Summary">
+              <div className={styles.summaryCardBody}>
+                <section className={styles.recommendedActionSection}>
+                  <div className={styles.recommendedActionTitle}>Recommended Action</div>
+                  <div className={styles.recommendedActionText}>{session.recommendedAction}</div>
+                  <div className={styles.confidenceRow}>
+                    <span className={styles.confidenceLabel}>Confidence:</span>
+                    <span className={`${styles.signalBadge} ${styles[`badge_${session.confidence.color}`]}`}>
+                      {session.confidence.label}
+                    </span>
+                  </div>
+                </section>
+
+                <section className={styles.summarySection}>
+                  <div className={styles.summarySectionLabel}>Key Facts</div>
+                  <div className={styles.keyFactsList}>
+                    {session.keyFacts.map((fact) => (
+                      <div key={fact.label} className={styles.keyFactRow}>
+                        <span className={styles.keyFactLabel}>{fact.label}</span>
+                        <span className={styles.keyFactValue}>{fact.value}</span>
+                        <button
+                          type="button"
+                          className={styles.jumpBtn}
+                          aria-label={`Show ${fact.label} in conversation`}
+                          onClick={() => focusHistoryMessage(fact.targetMessageId)}
+                        >
+                          →
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className={styles.summarySection}>
+                  <div className={styles.potentialIssuesTitle}>⚠ Potential Issues</div>
+                  <div className={styles.potentialIssuesList}>
+                    {session.potentialIssues.map((issue) => (
+                      <div key={issue.text} className={styles.potentialIssueItem}>
+                        <span>{issue.text}</span>
+                        <button
+                          type="button"
+                          className={styles.jumpBtn}
+                          aria-label="Show issue in conversation"
+                          onClick={() => focusHistoryMessage(issue.targetMessageId)}
+                        >
+                          →
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className={styles.summaryConfidenceSection}>
+                  Summary Confidence: {session.confidence.label} · Based on: {session.summaryBasis}
+                </section>
+
+                <section className={`${styles.summarySection} ${styles.quotesSection}`}>
+                  <div className={styles.summarySectionLabel}>User's Own Words</div>
+                  <div className={styles.quotesList}>
+                    {session.quotes.map((quote) => (
+                      <div key={quote} className={styles.quoteCard}>
+                        “{quote}”
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
-
-              {isSummaryExpanded && (
-                <div className={styles.summaryCardBody}>
-                  <section className={styles.recommendedActionSection}>
-                    <div className={styles.recommendedActionTitle}>Recommended Action</div>
-                    <div className={styles.recommendedActionText}>{session.recommendedAction}</div>
-                    <div className={styles.confidenceRow}>
-                      <span className={styles.confidenceLabel}>Confidence:</span>
-                      <span className={`${styles.signalBadge} ${styles[`badge_${session.confidence.color}`]}`}>
-                        {session.confidence.label}
-                      </span>
-                    </div>
-                  </section>
-
-                  <section className={styles.summarySection}>
-                    <div className={styles.summarySectionLabel}>Key Facts</div>
-                    <div className={styles.keyFactsList}>
-                      {session.keyFacts.map((fact) => (
-                        <div key={fact.label} className={styles.keyFactRow}>
-                          <span className={styles.keyFactLabel}>{fact.label}</span>
-                          <span className={styles.keyFactValue}>{fact.value}</span>
-                          <button
-                            type="button"
-                            className={styles.jumpBtn}
-                            aria-label={`Show ${fact.label} in conversation`}
-                            onClick={() => focusHistoryMessage(fact.targetMessageId)}
-                          >
-                            →
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className={styles.summarySection}>
-                    <div className={styles.potentialIssuesTitle}>⚠ Potential Issues</div>
-                    <div className={styles.potentialIssuesList}>
-                      {session.potentialIssues.map((issue) => (
-                        <div key={issue.text} className={styles.potentialIssueItem}>
-                          <span>{issue.text}</span>
-                          <button
-                            type="button"
-                            className={styles.jumpBtn}
-                            aria-label="Show issue in conversation"
-                            onClick={() => focusHistoryMessage(issue.targetMessageId)}
-                          >
-                            →
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className={styles.summaryConfidenceSection}>
-                    Summary Confidence: {session.confidence.label} · Based on: {session.summaryBasis}
-                  </section>
-
-                  <section className={`${styles.summarySection} ${styles.quotesSection}`}>
-                    <div className={styles.summarySectionLabel}>User's Own Words</div>
-                    <div className={styles.quotesList}>
-                      {session.quotes.map((quote) => (
-                        <div key={quote} className={styles.quoteCard}>
-                          “{quote}”
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                </div>
-              )}
-          </aside>
+            </section>
+          )}
 
           <section className={styles.chatWorkspace}>
             <div className={styles.chatScroll}>
