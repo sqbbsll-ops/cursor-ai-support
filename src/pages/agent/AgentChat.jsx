@@ -240,7 +240,7 @@ function RobotLogoIcon() {
 }
 
 function renderHistoryMessage(msg, activeHighlightId, setMessageRef) {
-  const rowClassName = `${msg.kind === "user" ? styles.historyMsgRight : styles.historyMsgLeft} ${
+  const rowClassName = `${msg.kind === "user" ? styles.historyMsgLeft : styles.historyMsgRight} ${
     activeHighlightId === msg.id ? styles.historyMessageHighlight : ""
   }`;
 
@@ -256,7 +256,7 @@ function renderHistoryMessage(msg, activeHighlightId, setMessageRef) {
   }
   return (
     <div key={msg.id} ref={(node) => setMessageRef(msg.id, node)} className={rowClassName}>
-      <div>
+      <div className={styles.historyAiContent}>
         <div className={styles.aiLabel}>AI</div>
         <div className={msg.kind === "aiCard" ? styles.historyAiCard : styles.historyAiBubble}>{msg.text}</div>
       </div>
@@ -388,7 +388,7 @@ export function AgentChat() {
         </button>
       </aside>
 
-      <div className={dash.rightWrap}>
+      <div className={`${dash.rightWrap} ${styles.chatRightWrap}`}>
         <header className={styles.chatHeader}>
           <div className={styles.chatHeaderTopRow}>
             <button type="button" className={styles.backBtn} onClick={() => navigate("/agent")}>
@@ -421,18 +421,19 @@ export function AgentChat() {
           </div>
         </header>
 
-        <button
-          type="button"
-          className={styles.summaryToggleBar}
-          onClick={() => setIsSummaryExpanded((prev) => !prev)}
-        >
-          {isSummaryExpanded ? "▲ Hide Summary" : "▼ View AI Summary"}
-        </button>
+        {!isSummaryExpanded && (
+          <button
+            type="button"
+            className={styles.summaryToggleBar}
+            onClick={() => setIsSummaryExpanded(true)}
+          >
+            ▼ View AI Summary
+          </button>
+        )}
 
-        <div className={styles.mainLayout}>
-          {isSummaryExpanded && (
-            <section className={styles.summaryCard} aria-label="AI Summary">
-              <div className={styles.summaryCardBody}>
+        {isSummaryExpanded && (
+          <section className={styles.summaryCard} aria-label="AI Summary">
+              <div className={styles.summaryCardScroll}>
                 <section className={styles.recommendedActionSection}>
                   <div className={styles.recommendedActionTitle}>Recommended Action</div>
                   <div className={styles.recommendedActionText}>{session.recommendedAction}</div>
@@ -498,9 +499,18 @@ export function AgentChat() {
                   </div>
                 </section>
               </div>
-            </section>
-          )}
+              <div className={styles.summaryFadeMask} aria-hidden="true" />
+              <button
+                type="button"
+                className={styles.summaryOverlayCollapseBtn}
+                onClick={() => setIsSummaryExpanded(false)}
+              >
+                ▲ Collapse Summary
+              </button>
+          </section>
+        )}
 
+        <div className={styles.mainLayout}>
           <section className={styles.chatWorkspace}>
             <div className={styles.chatScroll}>
               <div className={styles.liveMessagesArea}>
