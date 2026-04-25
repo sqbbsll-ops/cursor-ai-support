@@ -10,6 +10,8 @@ const WAITING_SESSIONS = [
     issue: "Flight Refund",
     summary:
       "Wants refund for Shanghai→Beijing flight (Apr 28). Checked rebooking options first, then confirmed refund.",
+    decisionHint: "Ready to process refund",
+    decisionTone: "green",
     orderNo: "C12345678",
     waitDisplay: "3m 42s",
     waitLong: true
@@ -22,6 +24,8 @@ const WAITING_SESSIONS = [
     issue: "Hotel Cancellation",
     summary:
       "Requesting cancellation for Grand Hyatt Shanghai (Apr 27-29). No special circumstances noted.",
+    decisionHint: "Needs verification",
+    decisionTone: "orange",
     orderNo: "H98765432",
     waitDisplay: "1m 15s",
     waitLong: false
@@ -33,6 +37,8 @@ const WAITING_SESSIONS = [
     initials: "WF",
     issue: "Order Inquiry",
     summary: "Checking status of flight order. Simple inquiry, no refund needed.",
+    decisionHint: "Missing key info",
+    decisionTone: "red",
     orderNo: "C87654321",
     waitDisplay: "0m 48s",
     waitLong: false
@@ -166,6 +172,12 @@ export function AgentDashboard() {
                     <div className={styles.aiSummaryBlock}>
                       <div className={styles.aiSummaryLabel}>AI Summary</div>
                       <p className={styles.aiSummaryText}>{session.summary}</p>
+                    </div>
+                    <div className={styles.decisionRow}>
+                      <span className={styles.decisionLabel}>Decision:</span>
+                      <span className={`${styles.decisionBadge} ${styles[`decisionBadge_${session.decisionTone}`]}`}>
+                        {session.decisionHint}
+                      </span>
                     </div>
                     <div className={styles.metaRow}>
                       <span>

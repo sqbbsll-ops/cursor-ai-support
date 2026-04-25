@@ -428,6 +428,47 @@
   color: #262626;
 }
 
+.decisionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.decisionLabel {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.decisionBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.decisionBadge_green {
+  background: #f6ffed;
+  border-color: #b7eb8f;
+  color: #52c41a;
+}
+
+.decisionBadge_orange {
+  background: #fff7e6;
+  border-color: #ffd591;
+  color: #fa8c16;
+}
+
+.decisionBadge_red {
+  background: #fff1f0;
+  border-color: #ffa39e;
+  color: #f5222d;
+}
+
 .metaRow {
   display: flex;
   flex-wrap: wrap;

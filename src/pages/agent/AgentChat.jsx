@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import dash from "./AgentDashboard.module.css";
 import styles from "./AgentChat.module.css";
 
-/** @typedef {{ kind: 'user' | 'ai' | 'aiCard', text: string, unprocessed?: boolean }} HistoryMsg */
+/** @typedef {{ id: string, kind: 'user' | 'ai' | 'aiCard', text: string, unprocessed?: boolean }} HistoryMsg */
 /** @typedef {{ text: string, tag: string }} UnprocessedCard */
 /** @typedef {{ status: 'done' | 'warning' | 'pending', text: string }} StepItem */
 /** @typedef {{ key: string, value: string }} OrderLine */
 /** @typedef {{ label: string, color: 'green' | 'orange' | 'red' | 'blue' | 'gray' }} SignalBadge */
 /** @typedef {{ emotion: SignalBadge, attitude: SignalBadge, intent: SignalBadge }} SessionSignals */
+/** @typedef {{ label: string, value: string, targetMessageId: string }} KeyFact */
+/** @typedef {{ text: string, targetMessageId: string }} PotentialIssue */
 
 /**
  * @typedef {{
@@ -24,6 +26,11 @@ import styles from "./AgentChat.module.css";
  *   quickChips: string[];
  *   requestHeadline: string;
  *   requestSubtext: string;
+ *   recommendedAction: string;
+ *   confidence: SignalBadge;
+ *   keyFacts: KeyFact[];
+ *   potentialIssues: PotentialIssue[];
+ *   summaryBasis: string;
  *   quotes: string[];
  *   signals: SessionSignals;
  *   unprocessedCards: UnprocessedCard[];
@@ -46,24 +53,37 @@ const CHAT_SESSIONS = {
     priorityHigh: true,
     orderHeader: { no: "C12345678", route: "Shanghai → Beijing", departure: "Apr 28, 14:00" },
     messages: [
-      { kind: "user", text: "I'd like to cancel my flight" },
-      { kind: "ai", text: "Got it! Let me look up your recent bookings. One moment please..." },
+      { id: "s1-user-cancel", kind: "user", text: "I'd like to cancel my flight" },
+      { id: "s1-ai-lookup", kind: "ai", text: "Got it! Let me look up your recent bookings. One moment please..." },
       {
+        id: "s1-order-found",
         kind: "aiCard",
         text: "Flight found: Shanghai (PVG) → Beijing (PEK), Apr 28 14:00, Order C12345678"
       },
-      { kind: "user", text: "Actually I'm in a bit of a rush, I need this done today", unprocessed: true },
-      { kind: "user", text: "I tried calling yesterday but no one picked up", unprocessed: true },
-      { kind: "ai", text: "Would you like to apply for a refund or explore rebooking options?" },
-      { kind: "user", text: "Let's do rebooking first" },
-      { kind: "ai", text: "Rebooking fee: CNY 120. Next available: Apr 28 18:00." },
-      { kind: "user", text: "Actually just refund please" },
-      { kind: "ai", text: "Refund amount: CNY 680, processing fee CNY 50, timeline 3-5 business days." },
-      { kind: "user", text: "OK confirmed" }
+      { id: "s1-urgent", kind: "user", text: "Actually I'm in a bit of a rush, I need this done today", unprocessed: true },
+      { id: "s1-failed-contact", kind: "user", text: "I tried calling yesterday but no one picked up", unprocessed: true },
+      { id: "s1-ai-options", kind: "ai", text: "Would you like to apply for a refund or explore rebooking options?" },
+      { id: "s1-rebooking-first", kind: "user", text: "Let's do rebooking first" },
+      { id: "s1-ai-rebooking", kind: "ai", text: "Rebooking fee: CNY 120. Next available: Apr 28 18:00." },
+      { id: "s1-final-refund", kind: "user", text: "Actually just refund please" },
+      { id: "s1-refund-confirmed", kind: "ai", text: "Refund amount: CNY 680, processing fee CNY 50, timeline 3-5 business days." },
+      { id: "s1-ok-confirmed", kind: "user", text: "OK confirmed" }
     ],
     quickChips: ["Refund confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Refund Application",
     requestSubtext: "Checked rebooking first → confirmed refund",
+    recommendedAction: "Process refund directly",
+    confidence: { label: "High", color: "green" },
+    keyFacts: [
+      { label: "Task", value: "Refund Application", targetMessageId: "s1-final-refund" },
+      { label: "Order", value: "C12345678", targetMessageId: "s1-order-found" },
+      { label: "Status", value: "Refund confirmed", targetMessageId: "s1-refund-confirmed" }
+    ],
+    potentialIssues: [
+      { text: "User in a rush — urgent handling needed", targetMessageId: "s1-urgent" },
+      { text: "Previous failed contact attempt", targetMessageId: "s1-failed-contact" }
+    ],
+    summaryBasis: "Full conversation",
     quotes: [
       "I'm in a bit of a rush, I need this done today.",
       "I tried calling yesterday but no one picked up.",
@@ -97,23 +117,37 @@ const CHAT_SESSIONS = {
     priorityHigh: false,
     orderHeader: { no: "H98765432", route: "Grand Hyatt Shanghai", departure: "Apr 27-29" },
     messages: [
-      { kind: "user", text: "I'd like to change my hotel room" },
+      { id: "s2-user-change-room", kind: "user", text: "I'd like to change my hotel room" },
       {
+        id: "s2-order-found",
         kind: "ai",
         text: "I found your booking: Grand Hyatt Shanghai, Apr 27-29, Order H98765432. Would you like to cancel?"
       },
-      { kind: "user", text: "No I don't want to cancel, I want to upgrade to a suite", unprocessed: true },
-      { kind: "ai", text: "I can help you with cancellation or check your booking status." },
+      { id: "s2-upgrade-request", kind: "user", text: "No I don't want to cancel, I want to upgrade to a suite", unprocessed: true },
+      { id: "s2-ai-unable", kind: "ai", text: "I can help you with cancellation or check your booking status." },
       {
+        id: "s2-pricing-request",
         kind: "user",
         text: "That's not what I need, I want to know if I can upgrade and how much it costs",
         unprocessed: true
       },
-      { kind: "user", text: "Can anyone help me with this?", unprocessed: true }
+      { id: "s2-frustrated-help", kind: "user", text: "Can anyone help me with this?", unprocessed: true }
     ],
     quickChips: ["Cancel confirmed", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Room Upgrade Inquiry",
     requestSubtext: "User wants to upgrade to suite — AI unable to process",
+    recommendedAction: "Verify upgrade availability manually",
+    confidence: { label: "Low", color: "red" },
+    keyFacts: [
+      { label: "Task", value: "Room Upgrade Inquiry", targetMessageId: "s2-upgrade-request" },
+      { label: "Order", value: "H98765432", targetMessageId: "s2-order-found" },
+      { label: "Status", value: "Unresolved", targetMessageId: "s2-ai-unable" }
+    ],
+    potentialIssues: [
+      { text: "AI unable to process request — full manual handling required", targetMessageId: "s2-ai-unable" },
+      { text: "User expressed frustration", targetMessageId: "s2-frustrated-help" }
+    ],
+    summaryBasis: "Partial conversation",
     quotes: [
       "I want to upgrade to a suite, not cancel.",
       "I want to know if I can upgrade and how much it costs.",
@@ -146,15 +180,26 @@ const CHAT_SESSIONS = {
     priorityHigh: false,
     orderHeader: { no: "C87654321", route: "Shanghai → Beijing", departure: "Apr 28, 14:00" },
     messages: [
-      { kind: "user", text: "I'd like to check my order status" },
-      { kind: "ai", text: "Found your order: Flight C87654321, Shanghai→Beijing" },
-      { kind: "user", text: "I've been waiting for 3 days already", unprocessed: true },
-      { kind: "ai", text: "Your order status is: Confirmed. Departure April 28, 14:00." },
-      { kind: "user", text: "OK thanks" }
+      { id: "s3-status-request", kind: "user", text: "I'd like to check my order status" },
+      { id: "s3-order-found", kind: "ai", text: "Found your order: Flight C87654321, Shanghai→Beijing" },
+      { id: "s3-waited", kind: "user", text: "I've been waiting for 3 days already", unprocessed: true },
+      { id: "s3-status-confirmed", kind: "ai", text: "Your order status is: Confirmed. Departure April 28, 14:00." },
+      { id: "s3-ok-thanks", kind: "user", text: "OK thanks" }
     ],
     quickChips: ["Status shared", "Processing now", "Need more info", "Escalate"],
     requestHeadline: "Order Status Check",
     requestSubtext: "Customer needed status clarity after a long wait",
+    recommendedAction: "Confirm order status and close",
+    confidence: { label: "Medium", color: "orange" },
+    keyFacts: [
+      { label: "Task", value: "Order Status Check", targetMessageId: "s3-status-request" },
+      { label: "Order", value: "C87654321", targetMessageId: "s3-order-found" },
+      { label: "Status", value: "Confirmed", targetMessageId: "s3-status-confirmed" }
+    ],
+    potentialIssues: [
+      { text: "User waited 3 days — risk of escalation", targetMessageId: "s3-waited" }
+    ],
+    summaryBasis: "Full conversation",
     quotes: [
       "I've been waiting for 3 days already.",
       "OK thanks."
@@ -194,10 +239,14 @@ function RobotLogoIcon() {
   );
 }
 
-function renderHistoryMessage(msg, i) {
+function renderHistoryMessage(msg, activeHighlightId, setMessageRef) {
+  const rowClassName = `${msg.kind === "user" ? styles.historyMsgLeft : styles.historyMsgRight} ${
+    activeHighlightId === msg.id ? styles.historyMessageHighlight : ""
+  }`;
+
   if (msg.kind === "user") {
     return (
-      <div key={i} className={styles.historyMsgLeft}>
+      <div key={msg.id} ref={(node) => setMessageRef(msg.id, node)} className={rowClassName}>
         <div>
           <div className={styles.historyUserBubble}>{msg.text}</div>
           {msg.unprocessed && <div className={styles.unprocessedTag}>⚠ Unprocessed</div>}
@@ -206,7 +255,7 @@ function renderHistoryMessage(msg, i) {
     );
   }
   return (
-    <div key={i} className={styles.historyMsgRight}>
+    <div key={msg.id} ref={(node) => setMessageRef(msg.id, node)} className={rowClassName}>
       <div className={styles.aiLabel}>AI</div>
       <div className={msg.kind === "aiCard" ? styles.historyAiCard : styles.historyAiBubble}>{msg.text}</div>
     </div>
@@ -237,17 +286,20 @@ export function AgentChat() {
   const session = useMemo(() => getChatSession(sessionId), [sessionId]);
 
   const [replyDraft, setReplyDraft] = useState("");
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
   const [liveMessages, setLiveMessages] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [activeHighlightId, setActiveHighlightId] = useState("");
+  const messageRefs = useRef({});
+  const highlightTimerRef = useRef(null);
 
   useEffect(() => {
     setReplyDraft("");
-    setIsHistoryOpen(false);
     setIsSummaryExpanded(true);
     setLiveMessages([]);
     setToastMessage("");
+    setActiveHighlightId("");
+    messageRefs.current = {};
   }, [session]);
 
   useEffect(() => {
@@ -256,6 +308,14 @@ export function AgentChat() {
     return () => window.clearTimeout(timer);
   }, [toastMessage, navigate]);
 
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+      }
+    };
+  }, []);
+
   const placeholder = `Type your reply to ${session.userName}...`;
 
   const handleSend = () => {
@@ -263,6 +323,30 @@ export function AgentChat() {
     if (!trimmed) return;
     setLiveMessages((prev) => [...prev, { sender: "agent", text: trimmed }]);
     setReplyDraft("");
+  };
+
+  const setMessageRef = (messageId, node) => {
+    if (node) {
+      messageRefs.current[messageId] = node;
+    } else {
+      delete messageRefs.current[messageId];
+    }
+  };
+
+  const focusHistoryMessage = (messageId) => {
+    setIsSummaryExpanded(false);
+    window.requestAnimationFrame(() => {
+      const node = messageRefs.current[messageId];
+      if (!node) return;
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      setActiveHighlightId(messageId);
+      if (highlightTimerRef.current) {
+        window.clearTimeout(highlightTimerRef.current);
+      }
+      highlightTimerRef.current = window.setTimeout(() => {
+        setActiveHighlightId("");
+      }, 2000);
+    });
   };
 
   return (
@@ -336,11 +420,12 @@ export function AgentChat() {
         </header>
 
         <div className={styles.mainLayout}>
-          <section className={`${styles.chatWorkspace} ${isHistoryOpen ? styles.chatWorkspaceWithHistory : styles.chatWorkspaceFull}`}>
-            <div className={styles.chatScroll}>
-            <div className={styles.summaryCard}>
+          <section className={styles.chatWorkspace}>
+            <div className={`${styles.summaryCard} ${!isSummaryExpanded ? styles.summaryCardCollapsed : ""}`}>
               <div className={styles.summaryCardHeader}>
-                <div className={styles.summaryCardTitle}>AI Summary — {session.userName} · {session.issue}</div>
+                <div className={styles.summaryCardTitle}>
+                  {isSummaryExpanded ? `AI Summary — ${session.userName} · ${session.issue}` : `${session.userName} · AI Summary`}
+                </div>
                 <button
                   type="button"
                   className={styles.summaryCollapseBtn}
@@ -352,10 +437,58 @@ export function AgentChat() {
 
               {isSummaryExpanded && (
                 <div className={styles.summaryCardBody}>
+                  <section className={styles.recommendedActionSection}>
+                    <div className={styles.recommendedActionTitle}>Recommended Action</div>
+                    <div className={styles.recommendedActionText}>{session.recommendedAction}</div>
+                    <div className={styles.confidenceRow}>
+                      <span className={styles.confidenceLabel}>Confidence:</span>
+                      <span className={`${styles.signalBadge} ${styles[`badge_${session.confidence.color}`]}`}>
+                        {session.confidence.label}
+                      </span>
+                    </div>
+                  </section>
+
                   <section className={styles.summarySection}>
-                    <div className={styles.summarySectionLabel}>What They Need</div>
-                    <div className={styles.requestHeadline}>{session.requestHeadline}</div>
-                    <div className={styles.requestSubtext}>{session.requestSubtext}</div>
+                    <div className={styles.summarySectionLabel}>Key Facts</div>
+                    <div className={styles.keyFactsList}>
+                      {session.keyFacts.map((fact) => (
+                        <div key={fact.label} className={styles.keyFactRow}>
+                          <span className={styles.keyFactLabel}>{fact.label}</span>
+                          <span className={styles.keyFactValue}>{fact.value}</span>
+                          <button
+                            type="button"
+                            className={styles.jumpBtn}
+                            aria-label={`Show ${fact.label} in conversation`}
+                            onClick={() => focusHistoryMessage(fact.targetMessageId)}
+                          >
+                            →
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className={styles.summarySection}>
+                    <div className={styles.potentialIssuesTitle}>⚠ Potential Issues</div>
+                    <div className={styles.potentialIssuesList}>
+                      {session.potentialIssues.map((issue) => (
+                        <div key={issue.text} className={styles.potentialIssueItem}>
+                          <span>{issue.text}</span>
+                          <button
+                            type="button"
+                            className={styles.jumpBtn}
+                            aria-label="Show issue in conversation"
+                            onClick={() => focusHistoryMessage(issue.targetMessageId)}
+                          >
+                            →
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className={styles.summaryConfidenceSection}>
+                    Summary Confidence: {session.confidence.label} · Based on: {session.summaryBasis}
                   </section>
 
                   <section className={`${styles.summarySection} ${styles.quotesSection}`}>
@@ -368,105 +501,15 @@ export function AgentChat() {
                       ))}
                     </div>
                   </section>
-
-                  <section className={styles.summarySection}>
-                    <div className={styles.summarySectionLabel}>Emotion &amp; Intent Signals</div>
-                    <div className={styles.signalsGrid}>
-                      <div className={styles.signalRow}>
-                        <span className={styles.signalLabel}>Emotion</span>
-                        <span
-                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.emotion.color}`]}`}
-                        >
-                          {session.signals.emotion.label}
-                        </span>
-                      </div>
-                      <div className={styles.signalRow}>
-                        <span className={styles.signalLabel}>Attitude toward AI</span>
-                        <span
-                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.attitude.color}`]}`}
-                        >
-                          {session.signals.attitude.label}
-                        </span>
-                      </div>
-                      <div className={styles.signalRow}>
-                        <span className={styles.signalLabel}>Hidden Intent</span>
-                        <span
-                          className={`${styles.signalBadge} ${styles[`badge_${session.signals.intent.color}`]}`}
-                        >
-                          {session.signals.intent.label}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className={`${styles.summarySection} ${styles.attentionSection}`}>
-                    <div className={styles.attentionTitle}>⚠ Needs Your Attention</div>
-                    {session.unprocessedCards.map((card) => (
-                      <div key={card.text} className={styles.attentionItem}>
-                        <p className={styles.attentionText}>{card.text}</p>
-                        <span className={styles.unprocessedCardTag}>{card.tag}</span>
-                      </div>
-                    ))}
-                    <p className={styles.summaryNote}>
-                      {session.manualHandlingNote
-                        ? "AI could not handle this request — manual assistance required"
-                        : "Not handled by AI — please address directly"}
-                    </p>
-                  </section>
-
-                  <section className={styles.summarySection}>
-                    <div className={styles.summarySectionLabel}>Progress</div>
-                    <div className={styles.horizontalStepper}>
-                      {session.steps.map((step, index) => (
-                        <div key={step.text} className={styles.stepItemInline}>
-                          <span
-                            className={
-                              step.status === "done"
-                                ? styles.stepDone
-                                : step.status === "warning"
-                                ? styles.stepWarning
-                                : styles.stepCurrent
-                            }
-                          >
-                            {step.status === "done" ? "✅" : step.status === "warning" ? "⚠" : "⏳"} {step.text}
-                          </span>
-                          {index < session.steps.length - 1 && <span className={styles.stepArrow}>→</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-
-                  {session.manualHandlingNote ? (
-                    <p className={styles.manualHandlingNote}>{session.manualHandlingNote}</p>
-                  ) : (
-                    <div className={styles.summaryActionRow}>
-                      <button
-                        type="button"
-                        className={styles.actionPrimary}
-                        onClick={() => setToastMessage("Refund confirmed. Case closed.")}
-                      >
-                        {session.primaryActionLabel}
-                      </button>
-                      <button type="button" className={styles.actionSecondary}>
-                        {session.secondaryActionLabel}
-                      </button>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className={styles.viewHistoryBtn}
-                    onClick={() => setIsHistoryOpen(true)}
-                  >
-                    View Full Conversation →
-                  </button>
                 </div>
               )}
             </div>
 
+            <div className={styles.chatScroll}>
             <div className={styles.liveMessagesArea}>
               <div className={styles.liveMessagesInner}>
-                <div className={styles.sessionStartDivider}>— Session started — Human agent connected —</div>
+                {session.messages.map((msg) => renderHistoryMessage(msg, activeHighlightId, setMessageRef))}
+                <div className={styles.sessionStartDivider}>— Transferred to human agent —</div>
                 {liveMessages.length === 0 ? (
                   <div className={styles.emptyState}>No messages yet. Start the conversation below.</div>
                 ) : (
@@ -501,29 +544,6 @@ export function AgentChat() {
               </div>
             </div>
           </section>
-
-          <aside
-            className={`${styles.historyPanel} ${isHistoryOpen ? styles.historyPanelOpen : styles.historyPanelClosed}`}
-            aria-hidden={!isHistoryOpen}
-          >
-            {isHistoryOpen && (
-              <>
-                <div className={styles.historyHeader}>
-                  <div>
-                    <h3 className={styles.historyTitle}>Chat History</h3>
-                    <p className={styles.historySubtitle}>AI & User conversation</p>
-                  </div>
-                  <button type="button" className={styles.historyCollapseBtn} onClick={() => setIsHistoryOpen(false)}>
-                    ›
-                  </button>
-                </div>
-                <div className={styles.historyScroll}>
-                  {session.messages.map((msg, i) => renderHistoryMessage(msg, i))}
-                  <div className={styles.historyTransferDivider}>— Transferred to human agent —</div>
-                </div>
-              </>
-            )}
-          </aside>
         </div>
       </div>
 
