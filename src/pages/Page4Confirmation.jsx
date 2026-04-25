@@ -22,18 +22,11 @@ function AiAvatarSmall() {
   );
 }
 
-const SUMMARY_DETAILS = {
-  flight: "Shanghai → Beijing",
-  order: "C12345678",
-  refund: "CNY 680 (after fee)"
+const REQUEST_OPTIONS_BY_INTENT = {
+  flight: ["Refund Application", "Flight Rebooking"],
+  hotel_cancellation: ["Hotel Cancellation", "Request Refund"],
+  order_inquiry: ["Order Inquiry", "Speak to Agent"]
 };
-
-const REQUEST_OPTIONS = [
-  "Refund Application",
-  "Flight Rebooking",
-  "Hotel Cancellation",
-  "Order Inquiry"
-];
 
 const EDIT_FIELD_STYLE = {
   width: "100%",
@@ -82,11 +75,54 @@ const VALUE_STYLE = {
   lineHeight: 1.5
 };
 
-function buildSummaryText(selectedRequest, noteText) {
+function getHotelDates(orderInfo) {
+  if (orderInfo.checkIn && orderInfo.checkOut) {
+    return `${orderInfo.checkIn} – ${orderInfo.checkOut}`;
+  }
+  return "Apr 27 – Apr 29";
+}
+
+function getSummaryConfig(intent, orderInfo, choice) {
+  if (intent === "hotel_cancellation") {
+    return {
+      primaryLabel: "Hotel:",
+      primaryValue: orderInfo.hotel || "Grand Hyatt Shanghai",
+      orderValue: orderInfo.orderId || "H98765432",
+      tertiaryLabel: "Dates:",
+      tertiaryValue: getHotelDates(orderInfo),
+      defaultRequest: "Hotel Cancellation",
+      requestOptions: REQUEST_OPTIONS_BY_INTENT.hotel_cancellation
+    };
+  }
+
+  if (intent === "order_inquiry") {
+    return {
+      primaryLabel: "Route:",
+      primaryValue: orderInfo.route || "Shanghai → Beijing",
+      orderValue: orderInfo.orderId || "C87654321",
+      tertiaryLabel: "Status:",
+      tertiaryValue: "Confirmed",
+      defaultRequest: "Order Inquiry",
+      requestOptions: REQUEST_OPTIONS_BY_INTENT.order_inquiry
+    };
+  }
+
+  return {
+    primaryLabel: "Flight:",
+    primaryValue: orderInfo.route || "Shanghai → Beijing",
+    orderValue: orderInfo.orderId || "C12345678",
+    tertiaryLabel: "Refund:",
+    tertiaryValue: "CNY 680 (after fee)",
+    defaultRequest: choice === "rebooking" ? "Flight Rebooking" : "Refund Application",
+    requestOptions: REQUEST_OPTIONS_BY_INTENT.flight
+  };
+}
+
+function buildSummaryText(summaryConfig, selectedRequest, noteText) {
   const summary = [
-    `Flight: ${SUMMARY_DETAILS.flight}`,
-    `Order: ${SUMMARY_DETAILS.order}`,
-    `Refund: ${SUMMARY_DETAILS.refund}`,
+    `${summaryConfig.primaryLabel} ${summaryConfig.primaryValue}`,
+    `Order: ${summaryConfig.orderValue}`,
+    `${summaryConfig.tertiaryLabel} ${summaryConfig.tertiaryValue}`,
     `Request: ${selectedRequest}`
   ];
 
@@ -102,17 +138,24 @@ export function Page4Confirmation() {
   const navigate = useNavigate();
   const location = useLocation();
   const incomingState = location.state || {};
+  const intent = incomingState.intent || "flight_refund";
+  const orderInfo = incomingState.orderInfo || {};
+  const choice = incomingState.choice || "refund";
+  const summaryConfig = useMemo(
+    () => getSummaryConfig(intent, orderInfo, choice),
+    [intent, orderInfo, choice]
+  );
 
   const [confirmed, setConfirmed] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState("Refund Application");
+  const [selectedRequest, setSelectedRequest] = useState(summaryConfig.defaultRequest);
   const [noteText, setNoteText] = useState("");
   const scrollEndRef = useRef(null);
 
   const summaryText = useMemo(
-    () => buildSummaryText(selectedRequest, noteText),
-    [selectedRequest, noteText]
+    () => buildSummaryText(summaryConfig, selectedRequest, noteText),
+    [summaryConfig, selectedRequest, noteText]
   );
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
@@ -138,13 +181,20 @@ export function Page4Confirmation() {
       navigate("/page5", {
         state: {
           ...incomingState,
+          intent,
+          orderInfo,
+          choice,
           userSummary: summaryText,
           transferFromPage4: true
         }
       });
     }, 1500);
     return () => clearTimeout(t);
-  }, [confirmed, navigate, incomingState, summaryText]);
+  }, [confirmed, navigate, incomingState, intent, orderInfo, choice, summaryText]);
+
+  useEffect(() => {
+    setSelectedRequest(summaryConfig.defaultRequest);
+  }, [summaryConfig.defaultRequest]);
 
   useEffect(() => {
     scrollEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -154,7 +204,7 @@ export function Page4Confirmation() {
     const text = inputValue.trim();
     if (!text) return;
     navigate("/page5", {
-      state: { ...incomingState, userSummary: summaryText, message: text }
+      state: { ...incomingState, intent, orderInfo, choice, userSummary: summaryText, message: text }
     });
     setInputValue("");
   };
@@ -248,10 +298,10 @@ export function Page4Confirmation() {
                     }}
                   >
                     <div style={READ_ROW_STYLE}>
-                      <span style={READ_LABEL_STYLE}>Flight:</span>
+                      <span style={READ_LABEL_STYLE}>{summaryConfig.primaryLabel}</span>
                       <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
                         {isEditing ? "Locked · " : ""}
-                        {SUMMARY_DETAILS.flight}
+                        {summaryConfig.primaryValue}
                       </span>
                     </div>
 
@@ -259,15 +309,15 @@ export function Page4Confirmation() {
                       <span style={READ_LABEL_STYLE}>Order:</span>
                       <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
                         {isEditing ? "Locked · " : ""}
-                        {SUMMARY_DETAILS.order}
+                        {summaryConfig.orderValue}
                       </span>
                     </div>
 
                     <div style={READ_ROW_STYLE}>
-                      <span style={READ_LABEL_STYLE}>Refund:</span>
+                      <span style={READ_LABEL_STYLE}>{summaryConfig.tertiaryLabel}</span>
                       <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
                         {isEditing ? "Locked · " : ""}
-                        {SUMMARY_DETAILS.refund}
+                        {summaryConfig.tertiaryValue}
                       </span>
                     </div>
 
@@ -279,7 +329,7 @@ export function Page4Confirmation() {
                           onChange={(e) => setSelectedRequest(e.target.value)}
                           style={EDIT_FIELD_STYLE}
                         >
-                          {REQUEST_OPTIONS.map((option) => (
+                          {summaryConfig.requestOptions.map((option) => (
                             <option key={option} value={option}>
                               {option}
                             </option>
