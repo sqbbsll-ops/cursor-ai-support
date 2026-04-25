@@ -7,6 +7,7 @@
 .chatHeader {
   height: 72px;
   flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -122,6 +123,7 @@
 
 .mainLayout {
   position: relative;
+  display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -130,32 +132,37 @@
 
 .chatWorkspace {
   height: 100%;
+  flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .chatScroll {
-  flex: 1 1 auto;
+  flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.summaryCard {
+  width: 320px;
+  height: 100%;
+  flex-shrink: 0;
+  min-height: 0;
+  border-right: 1px solid #e8e8e8;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.summaryCard {
-  margin: 16px;
-  margin-bottom: 10px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow: visible;
-  flex-shrink: 0;
-  height: auto;
-  display: flex;
-  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .summaryCardCollapsed {
@@ -163,6 +170,7 @@
 }
 
 .summaryCardHeader {
+  flex-shrink: 0;
   min-height: 48px;
   padding: 8px 14px;
   display: flex;
@@ -194,6 +202,8 @@
 }
 
 .summaryCardBody {
+  flex: 1;
+  min-height: 0;
   padding: 12px;
 }
 
@@ -448,9 +458,7 @@
 }
 
 .liveMessagesArea {
-  flex: 1 0 auto;
-  min-height: 120px;
-  padding: 8px 16px 8px;
+  min-height: 100%;
 }
 
 .liveMessagesInner {
@@ -518,11 +526,10 @@
 }
 
 .inputBar {
-  flex: 0 0 auto;
   flex-shrink: 0;
   background: #fff;
   border-top: 1px solid #e8e8e8;
-  padding: 10px 12px 12px;
+  padding: 12px 16px;
   z-index: 2;
 }
 

@@ -420,8 +420,7 @@ export function AgentChat() {
         </header>
 
         <div className={styles.mainLayout}>
-          <section className={styles.chatWorkspace}>
-            <div className={`${styles.summaryCard} ${!isSummaryExpanded ? styles.summaryCardCollapsed : ""}`}>
+          <aside className={`${styles.summaryCard} ${!isSummaryExpanded ? styles.summaryCardCollapsed : ""}`}>
               <div className={styles.summaryCardHeader}>
                 <div className={styles.summaryCardTitle}>
                   {isSummaryExpanded ? `AI Summary — ${session.userName} · ${session.issue}` : `${session.userName} · AI Summary`}
@@ -503,20 +502,21 @@ export function AgentChat() {
                   </section>
                 </div>
               )}
-            </div>
+          </aside>
 
+          <section className={styles.chatWorkspace}>
             <div className={styles.chatScroll}>
-            <div className={styles.liveMessagesArea}>
-              <div className={styles.liveMessagesInner}>
-                {session.messages.map((msg) => renderHistoryMessage(msg, activeHighlightId, setMessageRef))}
-                <div className={styles.sessionStartDivider}>— Transferred to human agent —</div>
-                {liveMessages.length === 0 ? (
-                  <div className={styles.emptyState}>No messages yet. Start the conversation below.</div>
-                ) : (
-                  liveMessages.map((msg, i) => renderAgentUserMessage(msg, i))
-                )}
+              <div className={styles.liveMessagesArea}>
+                <div className={styles.liveMessagesInner}>
+                  {session.messages.map((msg) => renderHistoryMessage(msg, activeHighlightId, setMessageRef))}
+                  <div className={styles.sessionStartDivider}>— Transferred to human agent —</div>
+                  {liveMessages.length === 0 ? (
+                    <div className={styles.emptyState}>No messages yet. Start the conversation below.</div>
+                  ) : (
+                    liveMessages.map((msg, i) => renderAgentUserMessage(msg, i))
+                  )}
+                </div>
               </div>
-            </div>
             </div>
 
             <div className={styles.inputBar}>
