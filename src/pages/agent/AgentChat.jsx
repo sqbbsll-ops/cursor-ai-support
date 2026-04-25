@@ -291,7 +291,9 @@ export function AgentChat() {
   const [toastMessage, setToastMessage] = useState("");
   const [activeHighlightId, setActiveHighlightId] = useState("");
   const messageRefs = useRef({});
+  const chatBottomRef = useRef(null);
   const highlightTimerRef = useRef(null);
+  const pendingTargetScrollRef = useRef(false);
 
   useEffect(() => {
     setReplyDraft("");
@@ -307,6 +309,24 @@ export function AgentChat() {
     const timer = window.setTimeout(() => navigate("/agent"), 2000);
     return () => window.clearTimeout(timer);
   }, [toastMessage, navigate]);
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "instant" });
+  }, []);
+
+  useEffect(() => {
+    if (isSummaryExpanded) return undefined;
+    if (pendingTargetScrollRef.current) {
+      pendingTargetScrollRef.current = false;
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [isSummaryExpanded]);
 
   useEffect(() => {
     return () => {
@@ -334,6 +354,7 @@ export function AgentChat() {
   };
 
   const focusHistoryMessage = (messageId) => {
+    pendingTargetScrollRef.current = true;
     setIsSummaryExpanded(false);
     window.requestAnimationFrame(() => {
       const node = messageRefs.current[messageId];
@@ -520,6 +541,7 @@ export function AgentChat() {
                   ) : (
                     liveMessages.map((msg, i) => renderAgentUserMessage(msg, i))
                   )}
+                  <div ref={chatBottomRef} />
                 </div>
               </div>
             </div>
