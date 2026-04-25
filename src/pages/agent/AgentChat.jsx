@@ -9,8 +9,9 @@ import styles from "./AgentChat.module.css";
 /** @typedef {{ key: string, value: string }} OrderLine */
 /** @typedef {{ label: string, color: 'green' | 'orange' | 'red' | 'blue' | 'gray' }} SignalBadge */
 /** @typedef {{ emotion: SignalBadge, attitude: SignalBadge, intent: SignalBadge }} SessionSignals */
-/** @typedef {{ label: string, value: string, targetMessageId: string }} KeyFact */
+/** @typedef {{ label: string, value: string }} KeyFact */
 /** @typedef {{ text: string, targetMessageId: string }} PotentialIssue */
+/** @typedef {{ text: string, targetMessageId: string }} UserQuote */
 
 /**
  * @typedef {{
@@ -31,7 +32,7 @@ import styles from "./AgentChat.module.css";
  *   keyFacts: KeyFact[];
  *   potentialIssues: PotentialIssue[];
  *   summaryBasis: string;
- *   quotes: string[];
+ *   quotes: UserQuote[];
  *   signals: SessionSignals;
  *   unprocessedCards: UnprocessedCard[];
  *   steps: StepItem[];
@@ -75,9 +76,8 @@ const CHAT_SESSIONS = {
     recommendedAction: "Process refund directly",
     confidence: { label: "High", color: "green" },
     keyFacts: [
-      { label: "Task", value: "Refund Application", targetMessageId: "s1-final-refund" },
-      { label: "Order", value: "C12345678", targetMessageId: "s1-order-found" },
-      { label: "Status", value: "Refund confirmed", targetMessageId: "s1-refund-confirmed" }
+      { label: "Task", value: "Refund Application" },
+      { label: "Status", value: "Refund confirmed" }
     ],
     potentialIssues: [
       { text: "User in a rush — urgent handling needed", targetMessageId: "s1-urgent" },
@@ -85,9 +85,9 @@ const CHAT_SESSIONS = {
     ],
     summaryBasis: "Full conversation",
     quotes: [
-      "I'm in a bit of a rush, I need this done today.",
-      "I tried calling yesterday but no one picked up.",
-      "Actually just refund please."
+      { text: "I'm in a bit of a rush, I need this done today.", targetMessageId: "s1-urgent" },
+      { text: "I tried calling yesterday but no one picked up.", targetMessageId: "s1-failed-contact" },
+      { text: "Actually just refund please.", targetMessageId: "s1-final-refund" }
     ],
     signals: {
       emotion: { label: "Anxious", color: "orange" },
@@ -139,9 +139,8 @@ const CHAT_SESSIONS = {
     recommendedAction: "Verify upgrade availability manually",
     confidence: { label: "Low", color: "red" },
     keyFacts: [
-      { label: "Task", value: "Room Upgrade Inquiry", targetMessageId: "s2-upgrade-request" },
-      { label: "Order", value: "H98765432", targetMessageId: "s2-order-found" },
-      { label: "Status", value: "Unresolved", targetMessageId: "s2-ai-unable" }
+      { label: "Task", value: "Room Upgrade Inquiry" },
+      { label: "Status", value: "Unresolved" }
     ],
     potentialIssues: [
       { text: "AI unable to process request — full manual handling required", targetMessageId: "s2-ai-unable" },
@@ -149,9 +148,9 @@ const CHAT_SESSIONS = {
     ],
     summaryBasis: "Partial conversation",
     quotes: [
-      "I want to upgrade to a suite, not cancel.",
-      "I want to know if I can upgrade and how much it costs.",
-      "Can anyone help me with this?"
+      { text: "I want to upgrade to a suite, not cancel.", targetMessageId: "s2-upgrade-request" },
+      { text: "I want to know if I can upgrade and how much it costs.", targetMessageId: "s2-pricing-request" },
+      { text: "Can anyone help me with this?", targetMessageId: "s2-frustrated-help" }
     ],
     signals: {
       emotion: { label: "Frustrated", color: "red" },
@@ -192,17 +191,16 @@ const CHAT_SESSIONS = {
     recommendedAction: "Confirm order status and close",
     confidence: { label: "Medium", color: "orange" },
     keyFacts: [
-      { label: "Task", value: "Order Status Check", targetMessageId: "s3-status-request" },
-      { label: "Order", value: "C87654321", targetMessageId: "s3-order-found" },
-      { label: "Status", value: "Confirmed", targetMessageId: "s3-status-confirmed" }
+      { label: "Task", value: "Order Status Check" },
+      { label: "Status", value: "Confirmed" }
     ],
     potentialIssues: [
       { text: "User waited 3 days — risk of escalation", targetMessageId: "s3-waited" }
     ],
     summaryBasis: "Full conversation",
     quotes: [
-      "I've been waiting for 3 days already.",
-      "OK thanks."
+      { text: "I've been waiting for 3 days already.", targetMessageId: "s3-waited" },
+      { text: "OK thanks.", targetMessageId: "s3-ok-thanks" }
     ],
     signals: {
       emotion: { label: "Impatient", color: "orange" },
@@ -452,14 +450,6 @@ export function AgentChat() {
                       <div key={fact.label} className={styles.keyFactRow}>
                         <span className={styles.keyFactLabel}>{fact.label}</span>
                         <span className={styles.keyFactValue}>{fact.value}</span>
-                        <button
-                          type="button"
-                          className={styles.jumpBtn}
-                          aria-label={`Show ${fact.label} in conversation`}
-                          onClick={() => focusHistoryMessage(fact.targetMessageId)}
-                        >
-                          →
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -492,8 +482,16 @@ export function AgentChat() {
                   <div className={styles.summarySectionLabel}>User's Own Words</div>
                   <div className={styles.quotesList}>
                     {session.quotes.map((quote) => (
-                      <div key={quote} className={styles.quoteCard}>
-                        “{quote}”
+                      <div key={quote.text} className={styles.quoteCard}>
+                        <span>“{quote.text}”</span>
+                        <button
+                          type="button"
+                          className={styles.jumpBtn}
+                          aria-label="Show quote in conversation"
+                          onClick={() => focusHistoryMessage(quote.targetMessageId)}
+                        >
+                          →
+                        </button>
                       </div>
                     ))}
                   </div>
