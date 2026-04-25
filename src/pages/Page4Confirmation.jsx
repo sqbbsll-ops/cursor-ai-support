@@ -22,13 +22,18 @@ function AiAvatarSmall() {
   );
 }
 
-const DEFAULT_EDIT_VALUES = {
-  flight: "Shanghai (PVG) → Beijing (PEK), April 28 at 14:00",
+const SUMMARY_DETAILS = {
+  flight: "Shanghai → Beijing",
   order: "C12345678",
-  request:
-    "You initially explored rebooking options but decided a refund works better for you.",
-  refund: "CNY 680 after CNY 50 processing fee, timeline 3-5 business days."
+  refund: "CNY 680 (after fee)"
 };
+
+const REQUEST_OPTIONS = [
+  "Refund Application",
+  "Flight Rebooking",
+  "Hotel Cancellation",
+  "Order Inquiry"
+];
 
 const EDIT_FIELD_STYLE = {
   width: "100%",
@@ -65,13 +70,32 @@ const LABEL_STYLE = {
 
 const READ_LABEL_STYLE = { ...LABEL_STYLE, minWidth: "80px" };
 
-function buildSummaryText(values) {
-  return [
-    `Flight: ${values.flight}`,
-    `Order: ${values.order}`,
-    `Request: ${values.request}`,
-    `Refund: ${values.refund}`
-  ].join("\n");
+const READ_ONLY_VALUE_STYLE = {
+  fontSize: "14px",
+  color: "#8c8c8c",
+  lineHeight: 1.5
+};
+
+const VALUE_STYLE = {
+  fontSize: "14px",
+  color: "#595959",
+  lineHeight: 1.5
+};
+
+function buildSummaryText(selectedRequest, noteText) {
+  const summary = [
+    `Flight: ${SUMMARY_DETAILS.flight}`,
+    `Order: ${SUMMARY_DETAILS.order}`,
+    `Refund: ${SUMMARY_DETAILS.refund}`,
+    `Request: ${selectedRequest}`
+  ];
+
+  const note = noteText.trim();
+  if (note) {
+    summary.push(`Note: ${note}`);
+  }
+
+  return summary.join("\n");
 }
 
 export function Page4Confirmation() {
@@ -82,10 +106,14 @@ export function Page4Confirmation() {
   const [confirmed, setConfirmed] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editValues, setEditValues] = useState(DEFAULT_EDIT_VALUES);
+  const [selectedRequest, setSelectedRequest] = useState("Refund Application");
+  const [noteText, setNoteText] = useState("");
   const scrollEndRef = useRef(null);
 
-  const summaryText = useMemo(() => buildSummaryText(editValues), [editValues]);
+  const summaryText = useMemo(
+    () => buildSummaryText(selectedRequest, noteText),
+    [selectedRequest, noteText]
+  );
   const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
 
   const goPage3 = () => {
@@ -136,10 +164,6 @@ export function Page4Confirmation() {
       event.preventDefault();
       handleSubmit();
     }
-  };
-
-  const updateField = (id, value) => {
-    setEditValues((prev) => ({ ...prev, [id]: value }));
   };
 
   return (
@@ -216,125 +240,102 @@ export function Page4Confirmation() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: isEditing ? 0 : "10px",
+                      gap: "10px",
                       padding: "12px",
                       width: "100%",
-                      minHeight: "140px",
+                      minHeight: "270px",
                       boxSizing: "border-box"
                     }}
                   >
-                    {isEditing ? (
-                      <div style={EDIT_ROW_STYLE}>
-                        <span style={LABEL_STYLE}>Flight:</span>
-                        <select
-                          value={editValues.flight}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, flight: e.target.value }))
-                          }
-                          style={{
-                            ...EDIT_FIELD_STYLE,
-                            cursor: "pointer",
-                            appearance: "auto",
-                            WebkitAppearance: "auto"
-                          }}
-                        >
-                          <option value="Shanghai (PVG) → Beijing (PEK), April 28 at 14:00">
-                            Shanghai (PVG) → Beijing (PEK), April 28 at 14:00
-                          </option>
-                          <option value="Beijing (PEK) → Shanghai (PVG), May 3 at 09:00">
-                            Beijing (PEK) → Shanghai (PVG), May 3 at 09:00
-                          </option>
-                          <option value="Shanghai (PVG) → Chengdu (CTU), April 30 at 16:30">
-                            Shanghai (PVG) → Chengdu (CTU), April 30 at 16:30
-                          </option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div style={READ_ROW_STYLE}>
-                        <span style={READ_LABEL_STYLE}>Flight:</span>
-                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                          {editValues.flight}
-                        </span>
-                      </div>
-                    )}
+                    <div style={READ_ROW_STYLE}>
+                      <span style={READ_LABEL_STYLE}>Flight:</span>
+                      <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
+                        {isEditing ? "Locked · " : ""}
+                        {SUMMARY_DETAILS.flight}
+                      </span>
+                    </div>
 
-                    {isEditing ? (
-                      <div style={EDIT_ROW_STYLE}>
-                        <span style={LABEL_STYLE}>Order:</span>
-                        <select
-                          value={editValues.order}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, order: e.target.value }))
-                          }
-                          style={{
-                            ...EDIT_FIELD_STYLE,
-                            cursor: "pointer",
-                            appearance: "auto",
-                            WebkitAppearance: "auto"
-                          }}
-                        >
-                          <option value="C12345678">C12345678</option>
-                          <option value="C87654321">C87654321</option>
-                          <option value="H98765432">H98765432</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div style={READ_ROW_STYLE}>
-                        <span style={READ_LABEL_STYLE}>Order:</span>
-                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                          {editValues.order}
-                        </span>
-                      </div>
-                    )}
+                    <div style={READ_ROW_STYLE}>
+                      <span style={READ_LABEL_STYLE}>Order:</span>
+                      <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
+                        {isEditing ? "Locked · " : ""}
+                        {SUMMARY_DETAILS.order}
+                      </span>
+                    </div>
+
+                    <div style={READ_ROW_STYLE}>
+                      <span style={READ_LABEL_STYLE}>Refund:</span>
+                      <span style={isEditing ? READ_ONLY_VALUE_STYLE : VALUE_STYLE}>
+                        {isEditing ? "Locked · " : ""}
+                        {SUMMARY_DETAILS.refund}
+                      </span>
+                    </div>
 
                     {isEditing ? (
                       <div style={EDIT_ROW_STYLE}>
                         <span style={LABEL_STYLE}>Request:</span>
-                        <textarea
-                          value={editValues.request}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, request: e.target.value }))
-                          }
-                          rows={4}
-                          style={{
-                            ...EDIT_FIELD_STYLE,
-                            lineHeight: "1.5",
-                            resize: "none"
-                          }}
-                        />
+                        <select
+                          value={selectedRequest}
+                          onChange={(e) => setSelectedRequest(e.target.value)}
+                          style={EDIT_FIELD_STYLE}
+                        >
+                          {REQUEST_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     ) : (
                       <div style={READ_ROW_STYLE}>
                         <span style={READ_LABEL_STYLE}>Request:</span>
-                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                          {editValues.request}
-                        </span>
+                        <span style={VALUE_STYLE}>{selectedRequest}</span>
                       </div>
                     )}
 
                     {isEditing ? (
-                      <div style={EDIT_ROW_STYLE}>
-                        <span style={LABEL_STYLE}>Refund:</span>
+                      <div style={{ marginTop: "12px" }}>
+                        <label
+                          htmlFor="request-note"
+                          style={{ ...LABEL_STYLE, display: "block", marginBottom: "6px" }}
+                        >
+                          Add Note:
+                        </label>
                         <textarea
-                          value={editValues.refund}
-                          onChange={(e) =>
-                            setEditValues((prev) => ({ ...prev, refund: e.target.value }))
-                          }
-                          rows={3}
+                          id="request-note"
+                          placeholder="Add any extra details for the agent..."
+                          value={noteText}
+                          onChange={(e) => setNoteText(e.target.value)}
                           style={{
-                            ...EDIT_FIELD_STYLE,
-                            lineHeight: "1.5",
-                            resize: "none"
+                            width: "100%",
+                            minHeight: "80px",
+                            border: "1.5px solid #1677FF",
+                            borderRadius: "6px",
+                            padding: "8px",
+                            fontSize: "14px",
+                            color: "#595959",
+                            lineHeight: 1.5,
+                            resize: "none",
+                            fontFamily: "inherit",
+                            boxSizing: "border-box",
+                            outline: "none"
                           }}
                         />
                       </div>
                     ) : (
-                      <div style={READ_ROW_STYLE}>
-                        <span style={READ_LABEL_STYLE}>Refund:</span>
-                        <span style={{ fontSize: "14px", color: "#595959", lineHeight: 1.5 }}>
-                          {editValues.refund}
-                        </span>
-                      </div>
+                      noteText.trim() && (
+                        <p
+                          style={{
+                            margin: "12px 0 0",
+                            fontSize: "13px",
+                            color: "#8c8c8c",
+                            fontStyle: "italic",
+                            lineHeight: 1.5
+                          }}
+                        >
+                          Note: {noteText.trim()}
+                        </p>
+                      )
                     )}
                   </div>
 
