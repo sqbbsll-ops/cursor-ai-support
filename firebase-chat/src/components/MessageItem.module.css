@@ -1,0 +1,73 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 78%;
+  margin-bottom: 0.65rem;
+}
+
+.own {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.sender {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.2rem;
+  padding-left: 0.5rem;
+}
+
+.bubble {
+  padding: 0.55rem 0.85rem 0.45rem;
+  border-radius: var(--radius-bubble);
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.own .bubble {
+  background: var(--bubble-sent);
+  color: var(--text-on-primary);
+  border-bottom-right-radius: 4px;
+}
+
+.other .bubble {
+  background: var(--bubble-other);
+  color: var(--bubble-other-text);
+  border-bottom-left-radius: 4px;
+}
+
+.text {
+  margin: 0;
+  word-break: break-word;
+}
+
+.time {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-align: right;
+  line-height: 1;
+}
+
+.own .time {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.other .time {
+  color: var(--text-muted);
+}
+
+.readLabel {
+  margin-top: 0.2rem;
+  padding-right: 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
